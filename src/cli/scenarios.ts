@@ -6,10 +6,11 @@ import { kill } from '../sim/combat.js';
 import { hasBond, rel } from '../sim/memory.js';
 import { invariants } from './invariants.js';
 import { basePower } from '../sim/combat.js';
-import { tileOf } from '../game/terrain.js';
+import { COLS, T, tileOf } from '../game/terrain.js';
 import { npcPos } from '../viewer/geo.js';
 import type { World } from '../sim/world.js';
 import { econ, residentsOf } from '../sim/settlement.js';
+import { book, type Quest } from '../sim/quests.js';
 
 let failed = 0;
 const check = (name: string, ok: boolean, info = '') => { if (!ok) failed++; console.log(`${ok ? 'PASS' : 'FAIL'}  ${name} ${info}`); };
@@ -32,7 +33,17 @@ const count = (w: World, type: string, fromSeq = 0) => w.events.filter(e => e.ty
   check('invariantlar', invariants(w).length === 0, invariants(w)[0] ?? '');
 
   const seq1 = w.seq, pros30 = new Map(Object.entries(econ(w).s).map(([id, s]) => [id, s.prosperity]));
-  runDays(w, 330);
+  // 5-bosqich: karvon iltimoslari kuzatiladi — savdogar kumushi iltimos ochiq paytda (oxirgi kun) va yopilgan kuni
+  const caravans = new Map<string, { q: Quest; before: number; after?: number }>();
+  for (let d = 0; d < 330; d++) {
+    runDays(w, 1);
+    for (const q of book(w).list) {
+      if (q.kind !== 'caravan' || (q.status !== 'open' && !caravans.has(q.id))) continue;   // faqat ochiq holida ko'rilganlari
+      const c = caravans.get(q.id) ?? { q, before: w.npcs[q.giver].silver };
+      caravans.set(q.id, c);
+      if (q.status === 'open') c.before = w.npcs[q.giver].silver; else c.after ??= w.npcs[q.giver].silver;
+    }
+  }
   const ms = (performance.now() - t0) / 360;
   console.log('\n# 2. 1 yil o\'yinchisiz');
   const alive0 = [...before.keys()];
@@ -63,6 +74,15 @@ const count = (w: World, type: string, fromSeq = 0) => w.events.filter(e => e.ty
   check("qishloqlarning ko'pchiligida aholi tarkibi o'zgardi (tug'ilish, o'lim, ko'chish, nikoh)", changedV / vills.length > 0.6, `(${changedV}/${vills.length})`);
   check("qishloqlar farovonligi o'zgardi", prosShift > vills.length * 0.2, `(${prosShift}/${vills.length})`);
   console.log(`   (ko'chishlar ${count(w, 'emigrated', seq0)}, ocharchilik ${count(w, 'famine', seq0)}, meros ${count(w, 'inheritance', seq0)}, do'kon meros ${count(w, 'inherited_shop', seq0)})`);
+
+  console.log('\n# 8. Karvon talandi — hech kim yordam bermadi');
+  const cq = [...caravans.values()], unaided = cq.filter(c => c.q.status === 'failed' && w.npcs[c.q.giver].alive && c.after !== undefined);
+  const poorer = unaided.filter(c => c.after! <= c.before * 0.5 + 40), closed = count(w, 'shop_closed', seq0);
+  const qk: Record<string, number> = {}; for (const e of w.events) if (e.seq > seq0 && e.type === 'quest_posted') qk[e.data!.kind as string] = (qk[e.data!.kind as string] ?? 0) + 1;
+  check("to'dalar karvonlarni taladi — savdogarlar iltimos qildi", cq.length >= 5, `(${cq.length} iltimos)`);
+  check("yordamsiz qolgan savdogar kambag'allashdi (kumushi yarmiga tushdi, ko'pi bilan bir kunlik daromad qo'shilib)", unaided.length > 0 && poorer.length === unaided.length, `(${poorer.length}/${unaided.length})`);
+  check("eng kambag'allari do'konini yopdi", closed > 0, `(${closed} do'kon yopildi)`);
+  console.log(`   (iltimoslar: ${Object.entries(qk).map(([k, v]) => `${k} ${v}`).join(', ')}; dunyo o'zi hal qildi: ${cq.filter(c => c.q.status === 'done').length} karvon, don karvoni ${count(w, 'relief_sent', seq0)})`);
   console.log(`   (yil statistikasi: risola topildi ${count(w, 'found_manual', seq0)}, raqibdan o'zdi ${count(w, 'surpassed_rival', seq0)}, bo'ron/qor ${count(w, 'weather', seq0)}, ${ms.toFixed(0)} ms/kun)`);
 }
 
@@ -149,6 +169,37 @@ const count = (w: World, type: string, fromSeq = 0) => w.events.filter(e => e.ty
   check("NPC risoladan uslub o'rgandi", r.ok && (n.techs?.length ?? 0) > t0, r.msg);
   check('NPC kuchaydi', !n.alive || basePower(n) > p0 * (1 - 0.6 * n.injury) * 1.05);
   check("NPC o'yinchini eslaydi (ustoz sifatida)", n.memories.some(m => m.type === 'taught' && m.subject === 'player'));
+}
+
+// ---- 9: o'yinchi qaroqchini o'ldiradi → kunlar o'tib to'da qasoskor yuboradi ----
+{
+  const g = new Game(17), w = g.w;
+  runDays(w, 2);
+  g.p.realm = 5;   // tajribali qahramon: aks holda qurbon yaqinlarining o'z qasosi (sim) uni to'da qasoskoridan oldin o'ldiradi
+  const gang = Object.values(w.factions).filter(f => f.active && f.ideology === 'demonic' && w.members(f.id).length >= 5)
+    .sort((a, b) => w.members(b.id).length - w.members(a.id).length)[0];
+  const bandit = w.members(gang.id).find(n => n.id !== gang.leader && !n.opId && !n.travel)!;
+  const [bx, by] = tileOf(...npcPos(w, bandit)); g.tx = bx; g.ty = by;
+  g.fight(bandit.id);
+  g.endEncounter({ result: 'win', hp: g.vitMax, energy: g.energy, focus: g.focus, herbsUsed: 0, spare: false });
+  const day0 = w.day, planned = book(w).later.some(l => l.kind === 'vendetta' && l.gang === gang.id);
+  // o'yinchi eng yaqin aholi punktiga ketib, u yerda dam oladi — hech narsa majburlanmaydi
+  const town = w.nearest(gang.base, w.settlements(), 60)!;
+  const ti = g.grid.loc.findIndex((l, i) => l === town && g.grid.t[i] === T.PLACE); g.tx = ti % COLS; g.ty = Math.floor(ti / COLS); g.p.location = town; w.dirty();
+  let avenger: string | undefined;
+  for (let k = 0; k < 6 * 14 && !avenger; k++) {
+    g.rest(4);
+    if (g.enc?.title.startsWith('Qasoskor')) avenger = g.enc.npcId;
+    else if (g.enc) g.endEncounter({ result: 'flee', hp: g.vitMax, energy: g.energy, focus: g.focus, herbsUsed: 0 });
+  }
+  const days = w.day - day0, av = avenger ? w.npcs[avenger] : undefined;
+  console.log(`\n# 9. O'yinchi ${gang.name} a'zosi ${bandit.name}ni o'ldirdi → ${av ? `${days} kundan keyin qasoskor ${av.name} keldi (${town})` : 'qasoskor kelmadi'}`);
+  check("qaroqchi o'ldi, to'da qasos rejalashtirdi", !bandit.alive && bandit.killer === 'player' && planned);
+  check("kunlar o'tib (3–10 kun) qasoskor keldi", !!av && days >= 3 && days <= 11, `(${days} kun)`);
+  check("qasoskor — o'sha to'da a'zosi, o'yinchi turgan joyda", av?.faction === gang.id && w.events.some(e => e.type === 'vendetta' && e.subject === avenger && e.location === town));
+  if (g.enc) g.endEncounter({ result: 'win', hp: g.vitMax, energy: g.energy, focus: g.focus, herbsUsed: 0, spare: false });
+  check("qasoskorni ham o'ldirsangiz — adovat davom etadi (yana qasoskor rejalashtiriladi)", !!av && !av.alive && book(w).later.some(l => l.kind === 'vendetta' && l.gang === gang.id));
+  check('invariantlar (qasos)', invariants(w).length === 0, invariants(w)[0] ?? '');
 }
 
 console.log(failed ? `\n${failed} ta ssenariy muvaffaqiyatsiz` : '\nBarcha ssenariylar o\'tdi');

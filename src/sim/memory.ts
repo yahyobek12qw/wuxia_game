@@ -76,13 +76,26 @@ export function rel(a: NPC, b: string, w?: World): Relation {
   return r;
 }
 
+/** rel(a, b, w).affection — obyekt yaratmasdan (xotira hissasi har xotira uchun hisoblanadi, bu issiq yo'l). */
+function affectionOf(a: NPC, b: string, w: World): number {
+  let x = a.relations[b]?.affection ?? 0;
+  if (a.faction) {
+    const o = w.npcs[b];
+    if (o?.alive && o.faction && o.id !== a.id) {
+      if (o.faction === a.faction) x += 0.05;
+      else if (w.tension(a.faction, o.faction) > 50) x -= 0.1;
+    }
+  }
+  return clamp(x, -1, 1);
+}
+
 // Kuzatuvchi nuqtai nazaridan xotira ta'siri koeffitsienti
 function scaleFor(w: World, obs: NPC, m: Memory): { k: number; judge: boolean } {
   if (m.object === obs.id) return { k: 1, judge: false };
   if (m.object === null) return { k: 0.6, judge: false };
-  const close = Math.max(bondStrength(obs, m.object), rel(obs, m.object, w).affection);
+  const aff = affectionOf(obs, m.object, w), close = Math.max(bondStrength(obs, m.object), aff);
   if (close > 0.25) return { k: 0.4 + 0.6 * Math.min(1, close), judge: false };
-  if (rel(obs, m.object, w).affection < -0.3) return { k: -0.3, judge: false };
+  if (aff < -0.3) return { k: -0.3, judge: false };
   return { k: 0, judge: true };
 }
 
@@ -129,11 +142,19 @@ function knownOf(n: NPC): Set<string> {
   c.len = arr.length; return c.set;
 }
 const topC = new WeakMap<Memory[], { len: number; list: Memory[] }>();
+const worth = (m: Memory) => m.importance * m.confidence;
 function topOf(n: NPC): Memory[] {
   const arr = n.memories; let c = topC.get(arr);
-  if (!c || c.len !== arr.length) {
-    c = { len: arr.length, list: arr.filter(m => m.confidence >= 0.35 && m.importance * m.confidence > 0.25).sort((a, b) => b.importance * b.confidence - a.importance * a.confidence).slice(0, 24) };
+  if (!c || c.len > arr.length) {
+    c = { len: arr.length, list: arr.filter(m => m.confidence >= 0.35 && worth(m) > 0.25).sort((a, b) => worth(b) - worth(a)).slice(0, 24) };
     topC.set(arr, c);
+  }
+  // Oxiriga qo'shilgan xotiralar saralangan ro'yxatga joylanadi (barqaror saralash bilan bir xil: teng qiymatda — keyingi o'rinda)
+  for (; c.len < arr.length; c.len++) {
+    const m = arr[c.len], v = worth(m);
+    if (m.confidence < 0.35 || v <= 0.25) continue;
+    let i = c.list.length; while (i > 0 && worth(c.list[i - 1]) < v) i--;
+    if (i < 24) { c.list.splice(i, 0, m); if (c.list.length > 24) c.list.pop(); }
   }
   return c.list;
 }
@@ -177,7 +198,7 @@ export function witness(w: World, type: MemoryType, subject: string, object: str
   const present = opts.present ?? w.at(loc);
   for (const o of present) {
     if (o.id === subject) continue;
-    const personal = o.id === object || (object !== null && (bondStrength(o, object) > 0 || rel(o, object, w).affection > 0.25));
+    const personal = o.id === object || (object !== null && (bondStrength(o, object) > 0 || affectionOf(o, object, w) > 0.25));
     if (!personal && (!opts.bystanders || o.role === 'child')) continue;   // bolalar faqat o'ziga va yaqinlariga tegishlisini eslaydi
     addMemory(w, o, { type, subject, object, day: w.day, location: loc, source: 'witnessed', confidence: 1, ...opts.extra });
   }
@@ -186,14 +207,13 @@ export function witness(w: World, type: MemoryType, subject: string, object: str
 // Gossip: so'zlovchi tinglovchi bilmagan eng muhim xotirani aytadi; ishonch 20% kamayadi
 export function gossip(w: World, a: NPC, b: NPC): void {
   const known = knownOf(b);
-  let best: Memory | null = null;
+  let best: Memory | null = null, trusts: boolean | undefined;
   for (const m of topOf(a)) {      // muhimlik bo'yicha saralangan: birinchi mos kelgani — eng muhimi
     if (known.has(m.origin) || m.subject === b.id) continue;
     if (m.secret) {
       // Sirni faqat ishonchli odamga, qo'rquvni yenga olsa aytadi
-      const fear = rel(a, m.subject, w).fear;
-      if (rel(a, b.id, w).trust < 0.25 || b.id === m.subject) continue;
-      if (!w.rng.get('social').chance(0.12 * a.traits.courage * (1 - fear))) continue;
+      if (!(trusts ??= rel(a, b.id, w).trust >= 0.25)) continue;
+      if (!w.rng.get('social').chance(0.12 * a.traits.courage * (1 - rel(a, m.subject, w).fear))) continue;
     }
     best = m; break;
   }
@@ -203,10 +223,11 @@ export function gossip(w: World, a: NPC, b: NPC): void {
 
 // Xotiralar sekin so'nadi: har NPC haftada bir marta (kunlarga taqsimlangan) 7 kunlik so'nish bilan qayta hisoblanadi — tezlik uchun
 const slot = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0; return ((h % 7) + 7) % 7; };
+const WEEK_DECAY = Math.pow(0.985, 7);
 export function decayMemories(w: World): void {
   for (const n of w.alive()) {
     if ((w.day + slot(n.id)) % 7 !== 0) continue;
-    for (const m of n.memories) m.importance *= Math.pow(0.985, 7 * (1 - m.permanence));
+    for (const m of n.memories) m.importance *= m.permanence === 1 ? 1 : m.permanence === 0 ? WEEK_DECAY : Math.pow(0.985, 7 * (1 - m.permanence));
     n.memories = n.memories.filter(m => m.importance > 0.05);
     recomputeRelations(w, n);
   }

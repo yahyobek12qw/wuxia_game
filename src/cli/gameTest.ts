@@ -579,10 +579,13 @@ for (const seed of [1, 2, 3]) {
   const goTo = (n: { id: string }) => { const [x, y] = tileOf(...npcPos(w, w.npcs[n.id])); g.tx = x; g.ty = y; };
   const gang = Object.values(w.factions).find(f => f.active && f.ideology === 'demonic' && w.members(f.id).length >= 4)!;
   const merchants = w.alive().filter(n => n.role === 'merchant' && !n.player).slice(0, 2);
-  w.emit({ type: 'ambush', location: w.tradeRoads()[0], subject: gang.leader!, object: gang.id, data: { loot: 0, killed: 0, victims: merchants.map(m => m.id) } });
+  const third = w.alive().find(n => n.role === 'merchant' && !n.player && !merchants.includes(n))!;
+  merchants[0].silver = 300; third.silver = 50;
+  w.emit({ type: 'ambush', location: w.tradeRoads()[0], subject: gang.leader!, object: gang.id, data: { loot: 0, killed: 0, victims: [third.id, merchants[0].id] } });
+  w.emit({ type: 'ambush', location: w.tradeRoads()[0], subject: gang.leader!, object: gang.id, data: { loot: 0, killed: 0, victims: [merchants[1].id] } });
   questsDaily(w);
   const cq = openQuests(w).filter(q => q.kind === 'caravan' && q.gang === gang.id);
-  check("karvon talansa — savdogar iltimos qiladi", cq.length === 2, String(cq.length));
+  check("karvon talansa — savdogar iltimos qiladi (bitta pistirma — bitta iltimos, eng boy savdogardan)", cq.length === 2 && cq.some(q => q.giver === merchants[0].id) && !cq.some(q => q.giver === third.id), String(cq.length));
   // bajarilmasa: savdogar kambag'allashadi, do'kon yopiladi
   const [q1, q2] = cq, m2 = w.npcs[q2.giver]; m2.silver = 100; q2.due = w.day - 1;
   questsDaily(w);

@@ -72,6 +72,7 @@ export function line(w: World, e: SimEvent): string | null {
     case 'inherited_shop': return `${s} marhum ${o}ning do'konini meros qilib oldi.`;
     case 'emigrated': return `${s} oilasi bilan (${d.count} kishi) ${at}dan ${o}ga ko'chib ketdi.`;
     case 'famine': return `🍚 ${at}da ocharchilik boshlandi!`;
+    case 'relief_sent': return `🍚 ${s} och qolgan ${at}ga don karvoni yubordi.`;
     case 'famine_over': return `${at}da ocharchilik tugadi (${d.days} kun davom etdi).`;
     case 'season_change': return `🍂 ${({ spring: 'Bahor', summer: 'Yoz', autumn: 'Kuz', winter: 'Qish' } as Record<string, string>)[d.season as string]} keldi.`;
     case 'weather': return d.kind === 'storm' ? "⛈ Dunyoni bo'ron qopladi: yo'llar xavfli, karvonlar to'xtadi." : '❄ Qor yog\'di: yo\'llar sekinlashdi.';

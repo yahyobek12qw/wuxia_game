@@ -13,11 +13,13 @@ interface Rule {
 
 const alive = (w: World, id?: string) => !!(id && w.npcs[id]?.alive);
 const ev = (today: SimEvent[], type: string) => today.filter(e => e.type === type);
-// Hikoya boshlangandan keyingi oxirgi mos voqea (oxiridan, hikoya kunigacha — butun ro'yxatni nusxalamasdan)
-const lastEvent = (w: World, s: StorySeed, types: string[], pred: (e: SimEvent) => boolean = () => true): SimEvent | undefined => {
-  for (let k = w.events.length - 1; k >= 0; k--) { const e = w.events[k]; if (e.day < s.day) return undefined; if (types.includes(e.type) && pred(e)) return e; }
-  return undefined;
+const countSince = (w: World, type: string, fromDay: number, pred: (e: SimEvent) => boolean): number => {
+  const l = w.eventsOf(type); let c = 0;
+  for (let k = l.length - 1; k >= 0 && l[k].day >= fromDay; k--) if (pred(l[k])) c++;
+  return c;
 };
+// Hikoya boshlangandan keyingi oxirgi mos voqea
+const lastEvent = (w: World, s: StorySeed, types: string[], pred: (e: SimEvent) => boolean = () => true): SimEvent | undefined => w.lastEventOf(types, s.day, pred);
 
 export const RULES: Rule[] = [
   { type: 'sect_war', drama: 0.92, cooldown: 0, multiSect: true,
@@ -67,7 +69,7 @@ export const RULES: Rule[] = [
     resolve: (w, s) => {
       const o = lastEvent(w, s, ['famine_over'], e => e.location === s.roles.place);
       if (o) return `Ocharchilik ${o.data!.days} kundan keyin tugadi.`;
-      const left = w.events.filter(e => e.day >= s.day && e.type === 'emigrated' && e.location === s.roles.place).length;
+      const left = countSince(w, 'emigrated', s.day, e => e.location === s.roles.place);
       return w.day - s.day > 90 ? `Ocharchilik cho'zilmoqda${left ? `, ${left} oila ko'chib ketdi` : ''}.` : null;
     } },
   { type: 'rivalry', drama: 0.45, cooldown: 15,
@@ -97,7 +99,9 @@ export const RULES: Rule[] = [
     } },
   { type: 'bandit_threat', drama: 0.6, cooldown: 25,
     detect: (w) => {
-      const n = w.events.filter(e => e.day > w.day - 10 && ['raid', 'ambush'].includes(e.type));
+      const n: SimEvent[] = [];
+      for (const t of ['raid', 'ambush']) w.lastEventOf([t], w.day - 9, e => { n.push(e); return false; });
+      n.sort((a, b) => a.seq - b.seq);
       const byF = new Map<string, number>();
       for (const e of n) byF.set(e.object!, (byF.get(e.object!) ?? 0) + 1);
       return [...byF].filter(([, c]) => c >= 2).map(([f]) => ({ key: `threat:${f}:${Math.floor(w.day / 30)}`, roles: { faction: f, leader: w.factions[f].leader ?? '' } }));
@@ -106,7 +110,7 @@ export const RULES: Rule[] = [
       const f = w.factions[s.roles.faction];
       if (!f.active) return `${f.name} tarqalib ketdi.`;
       if (!alive(w, s.roles.leader)) return `${w.nameOf(s.roles.leader)} halok bo'ldi, to'da boshsiz qoldi.`;
-      const quiet = !w.events.some(e => e.day > w.day - 20 && ['raid', 'ambush'].includes(e.type) && e.object === f.id);
+      const quiet = !w.lastEventOf(['raid', 'ambush'], w.day - 19, e => e.object === f.id);
       return quiet ? 'Hujumlar to\'xtadi, tahdid vaqtincha susaydi.' : null;
     } },
   { type: 'murder_mystery', drama: 0.9, cooldown: 0,
@@ -179,17 +183,21 @@ export const RULES: Rule[] = [
     } },
 ];
 
+const RULE_OF = new Map(RULES.map(x => [x.type, x]));
 const CHANNELS: [number, string][] = [[0.85, 'sahna (cinematic)'], [0.65, 'NPC iltimosi'], [0.5, "e'lonlar taxtasi"], [0, 'gossip']];
 
 export function directorScan(w: World): void {
-  const today = w.events.filter(e => e.day === w.day);
+  let k0 = w.events.length; while (k0 > 0 && w.events[k0 - 1].day === w.day) k0--;
+  const today = w.events.slice(k0);
   const r = w.rng.get('director');
   w.intensity *= 0.85;
   const fresh: StorySeed[] = [];
+  const keys = new Set<string>(), lastSurf = new Map<string, StorySeed>();
+  for (const s of w.seeds) { keys.add(s.key); if (s.surfaced) lastSurf.set(s.type, s); }
   for (const rule of RULES) {
     for (const c of rule.detect(w, today)) {
-      if (w.seeds.some(s => s.key === c.key)) continue;
-      const last = [...w.seeds].reverse().find(s => s.type === rule.type && s.surfaced);
+      if (keys.has(c.key)) continue;
+      const last = lastSurf.get(rule.type);
       const cooling = last && w.day - last.day < rule.cooldown;
       fresh.push({ id: w.nextId('seed'), key: c.key, type: rule.type, day: w.day, roles: c.roles, drama: rule.drama * (cooling ? 0.5 : 1), surfaced: false, status: 'open' });
     }
@@ -208,7 +216,7 @@ export function directorScan(w: World): void {
   }
   for (const s of w.seeds) {
     if (s.status !== 'open') continue;
-    const out = RULES.find(x => x.type === s.type)!.resolve(w, s);
+    const out = RULE_OF.get(s.type)!.resolve(w, s);
     if (out) { s.status = 'resolved'; s.resolvedDay = w.day; s.outcome = out; }
   }
 }

@@ -108,6 +108,24 @@ export class World {
     this.bus.publish(full);
     return full;
   }
+  /** Berilgan turdagi voqealar (vaqt tartibida). w.events hech qachon qisqarmaydi, shuning uchun butun ro'yxatni har kuni skanerlash
+   *  o'rniga turi bo'yicha inkremental indeks; events massivi almashsa (yuklash) qayta quriladi. Snapshot'ga kirmaydi. */
+  private evIdx: { arr: SimEvent[]; n: number; by: Map<string, SimEvent[]> } | null = null;
+  eventsOf(type: string): SimEvent[] {
+    let x = this.evIdx;
+    if (!x || x.arr !== this.events || x.n > this.events.length) x = this.evIdx = { arr: this.events, n: 0, by: new Map() };
+    for (; x.n < this.events.length; x.n++) { const e = this.events[x.n]; let l = x.by.get(e.type); if (!l) x.by.set(e.type, l = []); l.push(e); }
+    return x.by.get(type) ?? [];
+  }
+  /** Oxirgi mos voqea: berilgan turlar ichida `fromDay` kunidan beri (eng kech seq), pred bilan. */
+  lastEventOf(types: string[], fromDay: number, pred: (e: SimEvent) => boolean = () => true): SimEvent | undefined {
+    let best: SimEvent | undefined;
+    for (const t of types) {
+      const l = this.eventsOf(t);
+      for (let k = l.length - 1; k >= 0 && l[k].day >= fromDay; k--) if (pred(l[k])) { if (!best || l[k].seq > best.seq) best = l[k]; break; }
+    }
+    return best;
+  }
 
   tension(a: string, b: string): number { return this.factions[a]?.tension[b] ?? 0; }
   addTension(a: string, b: string, v: number): void {

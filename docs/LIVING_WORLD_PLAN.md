@@ -26,7 +26,7 @@ uning ostidagi simulyatsiyani chuqurlashtirish. Har bir yangi tizim kamida ikkit
 | O'yinchi = sim NPC; real-time jang; sekta a'zoligi/vazifalar; inventar/hunarmandchilik; joylar (taverna, mehmonxona, kutubxona, teleport) | `game/*.ts`, `public/*` | ✅ |
 | Saqlash v2 (butun dunyo snapshot) | `game.ts toSave/restore` | ✅ |
 | Kuzatuvchi (/) va o'yin (/play) — bitta dunyo; NPC paneli | `viewer/*` | ✅ |
-| Testlar: determinizm, 145 o'yin testi, soak (yadro 10 seed), katta soak (3–5 seed) | `cli/*` | ✅ |
+| Testlar: determinizm, 203 o'yin testi, soak (yadro 10 seed), katta soak (3–5 seed) | `cli/*` | ✅ |
 
 ## 2. Qayta ishlatiladigan tizimlar
 Xotira/munosabat/rishta, gossip, sayohat, operatsiyalar, vorislik/schism, diplomatiya, direktor, yilnoma,
@@ -65,8 +65,9 @@ NPC.talents?: Partial<Record<'sword'|'qi'|'body'|'alchemy'|'medicine'|'craft', n
    (1 yil: tug'ildi ~50–60, nikoh ~70, o'lim ~30–80, aholi +2…+8%, 73–98 ms/kun; xotira so'nishi haftalik — tezlik uchun)
 3. **Fraksiyalar** ✅ *bajarildi* (jinoyat/mukofot, mahalliy obro', hudud nazorati va bosib olish, urush ta'minoti/charchash, sektalar urushida hudud o'tishi) — hudud o'zgarishi oqibatlari, urushda qo'shin/ta'minot, ichki siyosat chuqurlashuvi. Test 5.
 4. **Kultivatsiya** ✅ *bajarildi* (+ aholi ×4 ≈ 2600 NPC, LOD va indekslar bilan ~200 ms/kun) — iste'dod turlari, texnikalar (risolalar NPC'larga ham), yorilish natijalari (mutatsiya, yangi texnika, o'lim). Test 4.
-5. **Paydo bo'luvchi hikoyalar** ← *keyingi* — vazifalar dunyo holatidan (yo'qolgan karvon, o'g'irlangan narsa), kechikkan oqibatlar.
-6. **Tarix** — yil/fasl bo'yicha xronika, NPC/fraksiya/hudud tarixi, o'yinchi qarorlari; Voqealar ro'yxati bosiladigan.
+5. **Paydo bo'luvchi hikoyalar** ✅ *bajarildi* (`sim/quests.ts`) — iltimoslar dunyo voqealaridan (talangan karvon, guvohsiz o'g'rilik, bosib olingan qishloq, ocharchilik, sirli qotillik, tabibsiz yarador); dunyo ham hal qiladi (jazo yurishi, hudud egasining don karvoni, ozodlik), hech kim hal qilmasa — oqibat (do'kon yopiladi, ochlikdan o'lim, cho'loqlik); kechikkan oqibatlar (qasoskor, sekta taklifi, minnatdorlik). To'dalar bozor arafasida karvon yo'llarini nishonga oladi. Testlar 8, 9.
+   (1 yil, katta dunyo: karvon ~41, bosib olingan qishloqni ozod qilish ~35, o'g'rilik tergovi ~15, tabib/dori ~14, ocharchilik ~12; oqibatlar: ~2 do'kon yopiladi, hudud egasi ~1 marta don karvoni yuboradi (qolgan ocharchiliklarda — ochlikdan o'lim). Ssenariy 8 (1 yil, seed 11): 51 karvon iltimosi, yordamsiz qolgan har bir savdogar kumushining yarmini yo'qotdi, 8 do'kon yopildi; director/plots/gossip tezlashtirildi — bir xil mashinada 425–503 → 324–355 ms/kun (director yil oxirida ~200 → ~5 ms/kun). Diqqat: bu sinov VM'ida katta soak tezlik gate'i (< 100 ms/kun har 1000 NPC) hali o'tmaydi — o'zgartirishdan oldin ham o'tmagan edi)
+6. **Tarix** ← *keyingi* — yil/fasl bo'yicha xronika, NPC/fraksiya/hudud tarixi, o'yinchi qarorlari; Voqealar ro'yxati bosiladigan; eski voqealarni yillik xulosaga siqish (`w.events` cheksiz o'sadi), 10 yillik soak.
 
 ## 7. Unumdorlik xavflari
 - Hozir ~550 NPC × har soat utility AI ≈ 80–105 ms/kun (chegara 150). Yangi har-soat mantiq qo'shilmaydi;
@@ -75,6 +76,7 @@ NPC.talents?: Partial<Record<'sword'|'qi'|'body'|'alchemy'|'medicine'|'craft', n
 - LOD (3-daraja: statistik qishloq) — faqat o'lchov ko'rsatsa kiritiladi (keraksiz murakkablik qilmaslik).
 - `w.at(loc)` va `w.members()` chiziqli — og'ir joylarda `perHour` keshidan foydalanish.
 - Xotira o'sishi: 200 da siqiladi; yangi xotira turlari ham shu chegaraga bo'ysunadi.
+- `w.events` cheksiz o'sadi: kunlik kod uni boshidan skanerlamasligi kerak — `w.eventsOf(type)` / `lastEventOf()` (turi bo'yicha indeks) yoki oxiridan `seq` bo'yicha. Tarix bosqichida eski voqealar yillik xulosaga siqiladi.
 - Saqlash hajmi: snapshot'ga qo'shiladigan har maydon kichik bo'lishi kerak (voqealar ro'yxati eng katta qism).
 
 ## Ssenariy testlari (§49)
@@ -88,3 +90,5 @@ NPC.talents?: Partial<Record<'sword'|'qi'|'body'|'alchemy'|'medicine'|'craft', n
 | 5 | Fraksiya urushi → hudud va NPC'lar o'zgaradi | 3 ✅ |
 | 6 | Savdo yo'li buziladi → iqtisod o'zgaradi | 2 ✅ |
 | 7 | Qishloqni 1 yil tark etish → qishloq holati o'zgaradi | 2 ✅ |
+| 8 | Karvon talanadi, hech kim yordam bermaydi → savdogar kambag'allashadi, do'kon yopiladi | 5 ✅ |
+| 9 | O'yinchi qaroqchini o'ldiradi → kunlar o'tib qasoskor keladi | 5 ✅ |
