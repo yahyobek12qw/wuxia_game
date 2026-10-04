@@ -1,0 +1,13 @@
+# Bog'liqliklar (npm install bilan tiklanadi)
+node_modules/
+
+# O'yin saqlashlari va avtomatik hisobotlar
+saves/
+out/
+
+# Vaqtinchalik fayllar
+src/cli/_*.ts
+*.cpuprofile
+*.log
+.DS_Store
+Thumbs.db

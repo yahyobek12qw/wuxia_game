@@ -1,0 +1,21 @@
+{
+  "name": "wuxia-sim",
+  "version": "0.1.0",
+  "description": "WUXIA: A Living Martial World — M0 headless world simulation",
+  "type": "module",
+  "scripts": {
+    "gen": "tsx src/tools/genNpcs.ts",
+    "sim": "tsx src/cli/run.ts",
+    "soak": "tsx src/cli/soak.ts",
+    "soak:big": "tsx src/cli/bigSoak.ts",
+    "test": "tsx src/cli/determinism.ts && tsx src/cli/gameTest.ts",
+    "scenarios": "tsx src/cli/scenarios.ts",
+    "viewer": "tsx src/viewer/server.ts",
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.0"
+  }
+}

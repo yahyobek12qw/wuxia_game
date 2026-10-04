@@ -1,0 +1,894 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WUXIA — Safar</title>
+<style>
+  :root { --ink: #1d2523; --paper: #f2efe3; --panel: rgba(18, 24, 24, .88); --edge: #4d5b57; --gold: #e3b341; --red: #c4453f; --blue: #3f87c9; --green: #4aa07c; --dim: #a9b4af; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #101615; color: #e8efe9; font: 13px/1.4 "Segoe UI", system-ui, sans-serif; overflow: hidden; user-select: none; }
+  canvas#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .btn { background: var(--panel); border: 1px solid var(--edge); border-radius: 8px; padding: 7px 12px; backdrop-filter: blur(4px); }
+  .btn:hover { border-color: #8fa39c; background: rgba(32, 42, 41, .95); }
+  .btn kbd { display: inline-block; min-width: 20px; text-align: center; padding: 0 5px; margin-right: 6px; border-radius: 4px; background: #e8efe9; color: #1d2523; font-weight: 700; font-size: 12px; }
+  .btn.dis { opacity: .45; }
+
+  #tl { position: fixed; top: 12px; left: 12px; display: flex; gap: 8px; align-items: center; }
+  #tr { position: fixed; top: 12px; right: 12px; display: flex; gap: 8px; align-items: center; }
+  #near { position: fixed; top: 58px; right: 12px; width: 280px; display: none; flex-direction: column; gap: 6px; max-height: calc(100% - 250px); overflow-y: auto; }
+  #near .head { background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; padding: 6px 10px; cursor: pointer; display: flex; justify-content: space-between; color: var(--dim); font-size: 12px; }
+  #near .head:hover { color: #fff; }
+  #near.min { width: auto; }
+  .npc { background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; padding: 8px 10px; }
+  .npc.hostile { border-color: #8f3b37; }
+  .npc .nm { font-weight: 600; display: flex; align-items: center; gap: 7px; }
+  .npc .sub { color: var(--dim); font-size: 12px; margin: 1px 0 5px; }
+  .npc .acts { display: flex; gap: 5px; }
+  .npc .acts button { flex: 1; padding: 3px 6px; font-size: 12px; background: #26302f; border: 1px solid var(--edge); border-radius: 6px; }
+  .npc .acts button:hover { background: #33403e; }
+  .npc .acts button.war { border-color: #8f3b37; color: #ffb4ae; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; border: 1px solid #0007; }
+
+  #hud { position: fixed; left: 0; right: 0; bottom: 0; height: 120px; pointer-events: none; }
+  #hud > * { pointer-events: auto; }
+  #char { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 10px; align-items: flex-end; }
+  #portrait { width: 84px; height: 84px; border-radius: 50%; border: 3px solid #c9d2cd; background: radial-gradient(circle at 50% 35%, #f6f2e4, #cfd8d1); box-shadow: 0 3px 12px #000a; }
+  #charinfo { background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; padding: 7px 11px; min-width: 190px; }
+  #charinfo .realm { color: var(--gold); font-weight: 700; }
+  #charinfo .row { display: flex; gap: 12px; margin-top: 2px; color: var(--dim); }
+  #charinfo .row b { color: #fff; font-weight: 600; }
+  .xp { height: 5px; background: #2a3432; border-radius: 3px; margin-top: 5px; overflow: hidden; } .xp i { display: block; height: 100%; background: linear-gradient(90deg, #7fd0b3, #e3b341); }
+
+  #center { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: min(560px, calc(100% - 640px)); min-width: 380px; }
+  #log { margin-bottom: 8px; text-align: center; text-shadow: 0 1px 3px #000, 0 0 6px #000; }
+  #log div { padding: 1px 0; transition: opacity .6s; } #log .good { color: #8ee0b0; } #log .bad { color: #ff948e; } #log .alert { color: #ffd479; } #log .info { color: #e8efe9; }
+  #bars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .bar { position: relative; height: 20px; background: #0b100f; border: 1px solid #5d6c67; border-radius: 3px; overflow: hidden; }
+  .bar i { position: absolute; inset: 0 auto 0 0; }
+  .bar span { position: absolute; inset: 0; text-align: center; font-size: 12px; line-height: 18px; text-shadow: 0 1px 2px #000; font-weight: 600; }
+  .bar.v i { background: linear-gradient(#e0554f, #8d2823); } .bar.e i { background: linear-gradient(#4aa0e6, #25598f); } .bar.f i { background: linear-gradient(#6fcf8f, #2f7b4b); }
+  #hot { display: flex; gap: 6px; margin-top: 8px; justify-content: center; flex-wrap: wrap; }
+  #hot .btn { padding: 5px 10px; }
+
+  #right { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 10px; align-items: flex-end; }
+  #tileinfo { background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; padding: 8px 12px; min-width: 160px; }
+  #tileinfo h4 { margin: 0 0 4px; } #tileinfo .kv { display: flex; justify-content: space-between; gap: 14px; color: var(--dim); } #tileinfo .kv b { color: #fff; }
+  #mini { width: 140px; height: 140px; border-radius: 50%; border: 3px solid #c9d2cd; background: #7c8480; box-shadow: 0 3px 12px #000a; cursor: pointer; }
+  #zoom { position: fixed; left: 12px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; }
+
+  #modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); display: none; place-items: center; z-index: 30; }
+  #modal .box { width: min(640px, 92vw); max-height: 80vh; overflow-y: auto; background: #1b2423; border: 1px solid var(--edge); border-radius: 14px; padding: 16px 20px; }
+  #modal h3 { margin: 0 0 10px; display: flex; align-items: center; } #modal h3 button { margin-left: auto; }
+  .item { padding: 7px 10px; margin-bottom: 6px; border-left: 3px solid var(--edge); background: rgba(255, 255, 255, .04); border-radius: 0 6px 6px 0; }
+  .item small { color: var(--dim); display: block; } .item.open { border-left-color: var(--gold); }
+  #toast { position: fixed; left: 50%; top: 70px; transform: translateX(-50%); background: rgba(10, 14, 14, .92); border: 1px solid #8f3b37; color: #ffd0cc; padding: 6px 14px; border-radius: 8px; display: none; z-index: 20; }
+  #over { position: fixed; inset: 0; background: rgba(40, 0, 0, .65); display: none; place-items: center; z-index: 40; text-align: center; }
+  #over h1 { font-size: 40px; margin: 0 0 8px; } #over .btn { font-size: 16px; padding: 10px 22px; }
+  #tip { position: fixed; pointer-events: none; background: rgba(10, 14, 14, .92); border: 1px solid var(--edge); border-radius: 6px; padding: 4px 8px; font-size: 12px; display: none; z-index: 5; }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #101615; z-index: 50; color: var(--dim); font-size: 16px; }
+  @media (max-width: 900px) { #center { width: calc(100% - 24px); min-width: 0; bottom: 112px; } #char { bottom: 12px; } #right { display: none; } #near { width: 230px; } #hot .btn { padding: 4px 8px; } }
+</style>
+</head>
+<body>
+<div id="loading">Dunyo yuklanmoqda…</div>
+<canvas id="view"></canvas>
+
+<div id="tl">
+  <button class="btn" id="b-intel"><kbd>L</kbd>Razvedka</button>
+  <button class="btn" id="b-hall" style="display:none;border-color:#e3b341"><kbd>G</kbd>🏯 Zal</button>
+  <button class="btn" id="b-place" style="display:none;border-color:#8fe0ff"><kbd>E</kbd>🏮 Kirish</button>
+  <button class="btn" id="b-skills"><kbd>K</kbd>Ko'nikmalar <span id="sp-badge" style="display:none;background:#e3b341;color:#1d2523;border-radius:9px;padding:0 6px;margin-left:4px;font-weight:700"></span></button>
+  <button class="btn" id="b-save" title="O'yinni saqlash (avtomatik ham saqlanadi)">💾</button>
+  <button class="btn" id="b-new" title="Yangi o'yin">↻</button>
+  <a class="btn" href="/" style="text-decoration:none;color:inherit" title="Kuzatuvchi rejimi (sim yadrosi)">👁</a>
+  <button class="btn" id="b-map"><kbd>M</kbd>Xarita</button>
+  <button class="btn" id="b-sound" title="Tovush (O)">🔊</button>
+</div>
+<div id="tr"><button class="btn" id="b-letters"><kbd>R</kbd>Vazifalar va maktublar</button></div>
+<div id="near"></div>
+<div id="zoom">
+  <button class="btn" id="z-out">Kengaytirilgan ko'rinish</button>
+  <button class="btn" id="z-in">Yaqinroq ko'rinish</button>
+</div>
+
+<div id="hud">
+  <div id="char">
+    <canvas id="portrait" width="168" height="168"></canvas>
+    <div id="charinfo">
+      <div class="realm" id="c-realm">—</div>
+      <div id="c-fac" style="color:#9ad0ff;font-size:12px">—</div>
+      <div id="c-date" style="color:var(--dim)">—</div>
+      <div class="row"><span>🪙 <b id="c-silver">0</b></span><span>🌿 <b id="c-herb">0</b></span><span>⛏ <b id="c-ore">0</b></span></div>
+      <div class="xp"><i id="c-xp" style="width:0"></i></div>
+    </div>
+  </div>
+  <div id="center">
+    <div id="log"></div>
+    <div id="bars">
+      <div class="bar v"><i id="bv"></i><span id="tv"></span></div>
+      <div class="bar e"><i id="be"></i><span id="te"></span></div>
+      <div class="bar f"><i id="bf"></i><span id="tf"></span></div>
+    </div>
+    <div id="hot">
+      <button class="btn" data-a="explore"><kbd>Z</kbd>Tadqiq</button>
+      <button class="btn" data-a="cultivate"><kbd>C</kbd>Mashq (4s)</button>
+      <button class="btn" data-a="rest"><kbd>T</kbd>Dam olish (4s)</button>
+      <button class="btn" data-a="herb"><kbd>H</kbd>O't ishlatish</button>
+      <button class="btn" data-a="inv"><kbd>I</kbd>Inventar</button>
+    </div>
+  </div>
+  <div id="right">
+    <div id="tileinfo"></div>
+    <canvas id="mini" width="280" height="280"></canvas>
+  </div>
+</div>
+
+<div id="modal"><div class="box"><h3><span id="m-title"></span><button class="btn" onclick="closeModal()">✕</button></h3><div id="m-body"></div></div></div>
+<div id="toast"></div>
+<div id="tip"></div>
+<div id="over"><div><h1>Safaring tugadi</h1><p id="over-msg" style="margin:0 0 18px;color:#ddd"></p><button class="btn" onclick="newGame()">Yangi o'yin</button></div></div>
+
+<script src="/sound.js"></script>
+<script>
+'use strict';
+const $ = (s) => document.querySelector(s);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function rngF(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const T = { PLAIN: 0, FOREST: 1, MOUNTAIN: 2, WATER: 3, ROAD: 4, PLACE: 5 };
+const HOURS = [2, 3, 5, 99, 1, 1];
+const MINI_COL = ['#bcc79a', '#4f8077', '#8b979d', '#7fb0c6', '#cdb98e', '#d6a43a'];
+
+let MAP = null, S = null, G = null;          // xarita, holat, to'r
+let TS = 78;                                  // katak o'lchami (px)
+const cam = { x: 0, y: 0 };
+let W = 0, H = 0, DPR = 1;
+const canvas = $('#view'), ctx = canvas.getContext('2d');
+const npcAnim = new Map();                    // id -> {x,y}
+let hoverTile = null, path = [], walkId = 0, busy = false;
+const seenLog = new Set();
+
+// ====================== Siyoh uslubidagi spritelar ======================
+const SPR = 96, OV = Math.round(SPR * 0.62);
+const sprites = {};      // sprites[type][variant] = {c, d}
+function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function curve(c, x0, y0, cx, cy, x1, y1, col, w, a = 1) { c.globalAlpha = a; c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo(cx, cy, x1, y1); c.stroke(); c.globalAlpha = 1; }
+function blob(c, x, y, r, col, a) { c.globalAlpha = a; c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.globalAlpha = 1; }
+
+function bamboo(c, x, y, h, r) {
+  const bend = (r() - 0.5) * 12;
+  curve(c, x, y, x + bend * 0.2, y - h * 0.5, x + bend, y - h, '#3b6e66', 2.6);
+  for (let k = 1; k <= 4; k++) { const t = k / 5, px = x + bend * t * t, py = y - h * t; curve(c, px - 3, py, px, py - 1.5, px + 3, py, '#24433d', 1.3); }
+  for (let k = 0; k < 7; k++) {
+    const t = 0.45 + r() * 0.55, px = x + bend * t * t, py = y - h * t, dir = r() < 0.5 ? -1 : 1, len = 11 + r() * 9;
+    curve(c, px, py, px + dir * len * 0.5, py - 6 - r() * 4, px + dir * len, py + 3 + r() * 5, r() < 0.5 ? '#4f9488' : '#79b6a8', 2.4, 0.9);
+  }
+}
+function tree(c, x, y, s, r) {
+  curve(c, x, y, x - 1, y - s * 0.3, x + 1, y - s * 0.62, '#3a3731', 3.4);
+  for (let k = 0; k < 6; k++) blob(c, x + (r() - 0.5) * s * 0.95, y - s * 0.7 - r() * s * 0.45, s * (0.26 + r() * 0.18), '#3f7269', 0.8);
+  for (let k = 0; k < 4; k++) blob(c, x - s * 0.15 + (r() - 0.5) * s * 0.5, y - s * 0.95 - r() * s * 0.3, s * (0.12 + r() * 0.1), '#8bc3b5', 0.7);
+  for (let k = 0; k < 5; k++) { const a = 3.3 + r() * 2.6, px = x + Math.cos(a) * s * 0.42, py = y - s * 0.85 + Math.sin(a) * s * 0.4; curve(c, px - 4, py, px, py - 3, px + 5, py + 1, '#1f3a35', 1.3, 0.9); }
+}
+function willow(c, x, y, s, r) {
+  curve(c, x, y, x + 2, y - s * 0.3, x - 1, y - s * 0.7, '#4a4033', 3.2);
+  for (let k = 0; k < 4; k++) blob(c, x + (r() - 0.5) * s * 0.7, y - s * 0.78 - r() * s * 0.2, s * 0.24, '#6aa58a', 0.75);
+  for (let k = 0; k < 16; k++) { const x0 = x + (r() - 0.5) * s * 1.1, y0 = y - s * 0.78 + (r() - 0.5) * 6; curve(c, x0, y0, x0 + (r() - 0.5) * 6, y0 + s * 0.35, x0 + (r() - 0.5) * 10, y0 + s * (0.5 + r() * 0.35), r() < 0.5 ? '#a8d3b0' : '#7fb596', 1.5, 0.85); }
+}
+function mountain(c, x, y, s, r, snow) {
+  const g = c.createLinearGradient(0, y - s * 1.2, 0, y); g.addColorStop(0, '#b4c0c6'); g.addColorStop(1, '#6f7e86');
+  c.beginPath(); c.moveTo(x - s * 0.95, y); c.lineTo(x - s * 0.4, y - s * (0.75 + r() * 0.2)); c.lineTo(x - s * 0.12, y - s * 0.5); c.lineTo(x + s * 0.28, y - s * (1.0 + r() * 0.25)); c.lineTo(x + s * 0.55, y - s * 0.6); c.lineTo(x + s, y); c.closePath();
+  c.fillStyle = g; c.fill(); c.strokeStyle = '#33434b'; c.lineWidth = 1.8; c.lineJoin = 'round'; c.stroke();
+  for (let k = 0; k < 10; k++) { const t = r(), px = x - s * 0.2 + t * s * 0.9, py = y - s * (0.2 + r() * 0.7); curve(c, px, py, px + 3, py + 5, px + 2, py + 11, '#3d4e56', 1.3, 0.5); }
+  if (snow) { c.beginPath(); c.moveTo(x + s * 0.28, y - s * 1.05); c.lineTo(x + s * 0.1, y - s * 0.72); c.lineTo(x + s * 0.22, y - s * 0.78); c.lineTo(x + s * 0.32, y - s * 0.66); c.lineTo(x + s * 0.46, y - s * 0.78); c.closePath(); c.fillStyle = '#f4f7f9'; c.fill(); }
+  blob(c, x, y - 1, s * 0.8, '#ffffff', 0.18);
+}
+function grass(c, r, n) {
+  for (let k = 0; k < n; k++) {
+    const x = 6 + r() * (SPR - 12), y = 10 + r() * (SPR - 14);
+    for (let b = -1; b <= 1; b++) curve(c, x + b * 2, y, x + b * 3, y - 5, x + b * 5, y - 8 - r() * 4, r() < 0.5 ? '#6d8f6a' : '#8fae7a', 1.4, 0.9);
+  }
+  for (let k = 0; k < 6; k++) blob(c, 5 + r() * (SPR - 10), 5 + r() * (SPR - 10), 0.8 + r() * 1.2, '#a8a47e', 0.7);
+}
+function build() {
+  const kinds = [T.PLAIN, T.FOREST, T.MOUNTAIN, T.WATER];
+  for (const t of kinds) {
+    sprites[t] = [];
+    for (let v = 0; v < 8; v++) {
+      const col = mk(SPR, SPR + OV), c = col.getContext('2d'), r = rngF(t * 977 + v * 131 + 7);
+      c.translate(0, OV);
+      if (t === T.PLAIN) { grass(c, r, 4 + Math.floor(r() * 4)); if (v % 4 === 0) blob(c, 20 + r() * 50, 60 + r() * 20, 3 + r() * 2, '#8b8f86', 0.8); }
+      else if (t === T.FOREST) {
+        const n = 3 + Math.floor(r() * 3), items = [];
+        for (let k = 0; k < n; k++) items.push({ x: 12 + r() * (SPR - 24), y: 34 + r() * (SPR - 40), kind: r() });
+        items.sort((a, b) => a.y - b.y);
+        for (const it of items) { if (it.kind < 0.5) { bamboo(c, it.x, it.y, 46 + r() * 22, r); bamboo(c, it.x + 6, it.y + 3, 38 + r() * 16, r); } else if (it.kind < 0.8) tree(c, it.x, it.y, 44 + r() * 14, r); else willow(c, it.x, it.y, 48 + r() * 12, r); }
+      } else if (t === T.MOUNTAIN) {
+        mountain(c, 28 + r() * 8, SPR - 8, 36 + r() * 8, r, v % 3 === 0); mountain(c, 66 + r() * 8, SPR - 4, 30 + r() * 8, r, v % 2 === 0);
+        for (let k = 0; k < 2; k++) tree(c, 12 + r() * 70, SPR - 2 - r() * 6, 16 + r() * 6, r);
+      } else {
+        for (let k = 0; k < 4; k++) { const y = 14 + k * 20 + r() * 8, x = 8 + r() * 40; curve(c, x, y, x + 12, y - 4, x + 26, y, '#6f9fb6', 1.6, 0.8); curve(c, x + 28, y + 3, x + 40, y - 1, x + 50, y + 3, '#9bc3d4', 1.3, 0.7); }
+      }
+      const d = mk(SPR, SPR + OV), dc = d.getContext('2d'); dc.drawImage(col, 0, 0);
+      dc.globalCompositeOperation = 'source-atop'; dc.fillStyle = 'rgba(74,84,82,.66)'; dc.fillRect(0, 0, SPR, SPR + OV);
+      sprites[t].push({ c: col, d });
+    }
+  }
+}
+
+// ---- Manzil binolari (rangli, 3x3 katak) ----
+function ell(x, y, rx, ry, fill, stroke) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 7); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); } }
+function poly(pts, fill, stroke, lw = 2) { ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.stroke(); } }
+function rect(x, y, w, h, fill, stroke) { poly([[x, y], [x + w, y], [x + w, y + h], [x, y + h]], fill, stroke, 1.5); }
+function roof(cx, y, w, h, fill = '#9a3b2e') { poly([[cx - w / 2 - 8, y + 3], [cx - w / 2 + 6, y - h], [cx + w / 2 - 6, y - h], [cx + w / 2 + 8, y + 3], [cx, y - 2]], fill, '#4d1b15', 2); }
+function drawSect() {
+  ell(0, 30, 130, 42, '#6f6759'); ell(0, 24, 112, 34, '#b5ad9b'); ell(0, 22, 90, 26, '#cfc7b4');
+  for (let k = -1; k <= 1; k += 2) { rect(k * 78 - 20, -4, 40, 22, '#e6d9bb', '#6a5a42'); roof(k * 78, -4, 40, 16, '#8c3a2f'); }
+  let yy = 18; for (let i = 0; i < 4; i++) { const w = 74 - i * 14, h = 20; rect(-w / 2 + 6, yy - h, w - 12, h, '#efe3c6', '#6a5a42'); rect(-4, yy - h + 4, 8, h - 4, '#6b3a24'); roof(0, yy - h, w + 6, 13, i % 2 ? '#a8432f' : '#8c3a2f'); yy -= h + 8; }
+  ctx.strokeStyle = '#d6a43a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, yy + 6); ctx.lineTo(0, yy - 22); ctx.stroke(); ell(0, yy - 24, 4, 4, '#e3b341');
+}
+function drawVillage(t) {
+  for (let i = 0; i < 6; i++) { const a = i * 1.1 + 0.5, fx = Math.cos(a) * 82, fy = Math.sin(a) * 46 + 14; poly([[fx - 30, fy - 6], [fx + 10, fy - 14], [fx + 34, fy + 4], [fx - 6, fy + 12]], i % 2 ? '#c7b457' : '#7e9f43', '#00000030', 1); }
+  [[-40, 6], [-6, -20], [34, 2], [8, 24], [-34, 34], [48, 30]].forEach(([hx, hy], i) => { rect(hx - 15, hy - 12, 30, 20, '#d9c9a0', '#5b4a30'); poly([[hx - 20, hy - 11], [hx, hy - 30], [hx + 20, hy - 11]], i % 2 ? '#8a6b3a' : '#a07a3a', '#4b371c', 1.5); rect(hx - 4, hy - 4, 8, 12, '#4b3622'); });
+  ell(-6, -46 - ((t / 90) % 14), 6, 4, 'rgba(190,190,190,.45)');
+}
+function drawCity(t) {
+  ell(0, 56, 150, 30, '#00000030'); rect(-120, -50, 240, 100, '#cbbf9f', '#4e4533');
+  for (let i = -112; i < 112; i += 16) rect(i, -58, 9, 8, '#cbbf9f', '#4e4533');
+  [[-120, -50], [120, -50], [-120, 50], [120, 50]].forEach(([tx, ty]) => { rect(tx - 14, ty - 34, 28, 40, '#b9ad8c', '#4e4533'); roof(tx, ty - 34, 30, 14, '#3f5f8a'); });
+  rect(-110, -40, 220, 80, '#9a8f72');
+  [[-80, -8], [-28, -16], [26, -10], [78, -6], [-52, 22], [52, 24]].forEach(([bx, by], i) => { rect(bx - 20, by - 10, 40, 24, '#e2d6b6', '#5b4d34'); roof(bx, by - 10, 42, 15, i % 2 ? '#3f5f8a' : '#4c6e9c'); });
+  rect(-17, 28, 34, 24, '#4b3622', '#2a1d10'); ctx.strokeStyle = '#6b5a3a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, -58); ctx.lineTo(0, -92); ctx.stroke(); poly([[0, -92], [30 + Math.sin(t / 350) * 3, -86], [0, -78]], '#e3b341', '#7a5d12', 1.5);
+}
+function drawCamp(t) {
+  ell(0, 12, 92, 52, '#5b4a34', '#2e2518');
+  for (let a = 0; a < 6.28; a += 0.22) { const px = Math.cos(a) * 88, py = Math.sin(a) * 48 + 12; poly([[px - 2.5, py], [px, py - 14], [px + 2.5, py]], '#6e4e2e', '#2e2518', 1); }
+  [[-44, -4], [38, -8], [-6, 30], [46, 24]].forEach(([tx, ty], i) => { poly([[tx - 26, ty + 14], [tx, ty - 28], [tx + 26, ty + 14]], i % 2 ? '#8a2f2a' : '#6f2623', '#2e0f0d', 2); poly([[tx - 7, ty + 14], [tx, ty - 6], [tx + 7, ty + 14]], '#1b0c0a'); });
+  const fl = 1 + 0.25 * Math.sin(t / 90); ell(0, 6, 15 * fl, 9 * fl, 'rgba(255,170,60,.35)'); poly([[-7, 10], [0, -14 * fl], [7, 10]], '#ff9a2e'); poly([[-3.5, 10], [0, -5 * fl], [3.5, 10]], '#ffe27a');
+  ctx.strokeStyle = '#d33'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(62, -20); ctx.lineTo(62, -70); ctx.stroke(); poly([[62, -70], [92 + Math.sin(t / 300) * 3, -62], [62, -52]], '#111', '#d33', 1.5);
+}
+function drawCave(t) {
+  poly([[-100, 40], [-80, -10], [-40, -50], [0, -62], [44, -46], [86, -6], [104, 40]], '#7b7164', '#3d372e', 3); poly([[-40, -50], [0, -62], [44, -46], [10, -14], [-30, -20]], '#958b7c');
+  ctx.beginPath(); ctx.moveTo(-34, 40); ctx.quadraticCurveTo(-36, -22, 0, -24); ctx.quadraticCurveTo(36, -22, 34, 40); ctx.closePath(); ctx.fillStyle = '#0d0b0a'; ctx.fill(); ctx.strokeStyle = '#2f2923'; ctx.lineWidth = 3; ctx.stroke();
+  const a = 0.18 + 0.08 * Math.sin(t / 600); ell(0, 30, 70, 18, 'rgba(190,230,255,' + a + ')'); ell(0, -4, 50, 26, 'rgba(190,230,255,' + a + ')');
+}
+const ICON = { sect: drawSect, village: drawVillage, city: drawCity, camp: drawCamp, cave: drawCave };
+function drawRuin() {
+  ell(0, 26, 120, 28, 'rgba(0,0,0,.18)'); poly([[-112, 30], [112, 30], [92, 8], [-96, 10]], '#9a9384', '#4f4a40');
+  for (const [x, hh, broken] of [[-80, 80, 1], [-40, 118, 0], [40, 112, 0], [80, 56, 1]]) { rect(x - 10, 10 - hh, 20, hh, '#c9c1ae', '#4f4a40'); if (!broken) rect(x - 16, 2 - hh, 32, 9, '#b3ab98', '#4f4a40'); else poly([[x - 10, 10 - hh], [x + 10, 4 - hh], [x + 10, 14 - hh]], '#9a9384'); }
+  rect(-56, -116, 112, 12, '#b3ab98', '#4f4a40');
+  for (let k = 0; k < 6; k++) poly([[-90 + k * 34, 30], [-80 + k * 34, 18 - (k % 3) * 4], [-66 + k * 34, 30]], '#a39b8a', '#4f4a40', 1);
+  ctx.strokeStyle = '#4f8f3f'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-42, -100); ctx.quadraticCurveTo(-60, -50, -36, -10); ctx.moveTo(44, -96); ctx.quadraticCurveTo(58, -40, 40, 0); ctx.stroke();
+}
+function drawShrine(t) {
+  ell(0, 26, 84, 20, 'rgba(0,0,0,.18)'); rect(-62, -70, 12, 96, '#a8432f', '#4d1b15'); rect(50, -70, 12, 96, '#a8432f', '#4d1b15');
+  poly([[-88, -76], [88, -76], [76, -92], [-76, -92]], '#8c3a2f', '#4d1b15'); rect(-72, -60, 144, 10, '#a8432f', '#4d1b15');
+  const a = 0.25 + 0.15 * Math.sin(t / 400); ell(0, -8, 30, 30, 'rgba(160,230,255,' + a + ')'); ell(0, -8, 11, 11, 'rgba(235,250,255,.85)');
+}
+const POI_ICON = { town: { f: drawCity, k: 2.0 }, village: { f: drawVillage, k: 1.8 }, cave: { f: drawCave, k: 1.6 }, hideout: { f: drawCamp, k: 1.6 },
+  sect_ruin: { f: drawSect, k: 1.7, a: 0.62 }, ruin: { f: drawRuin, k: 1.5 }, shrine: { f: drawShrine, k: 1.4 }, sect: { f: drawSect, k: 2.2 } };
+const POI_NAME = { town: 'Shahar', village: "Qishloq", cave: "G'or", hideout: 'Qaroqchilar uyasi', sect_ruin: 'Tashlandiq sekta', ruin: 'Xaroba', shrine: 'Ibodatxona', sect: 'Sekta' };
+
+// ---- Odamlar ----
+function human(x, y, s, robe, o = {}) {
+  ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(x, y, s * 0.42, s * 0.14, 0, 0, 7); ctx.fill();
+  if (o.sword) { ctx.strokeStyle = '#2b2b2b'; ctx.lineWidth = s * 0.07; ctx.beginPath(); ctx.moveTo(x - s * 0.34, y - s * 0.12); ctx.lineTo(x + s * 0.32, y - s * 0.95); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(x - s * 0.18, y - s * 0.72); ctx.quadraticCurveTo(x - s * 0.42, y - s * 0.3, x - s * 0.34, y); ctx.lineTo(x + s * 0.34, y); ctx.quadraticCurveTo(x + s * 0.42, y - s * 0.3, x + s * 0.18, y - s * 0.72); ctx.closePath();
+  ctx.fillStyle = robe; ctx.fill(); ctx.strokeStyle = '#161b1a'; ctx.lineWidth = Math.max(1, s * 0.05); ctx.stroke();
+  if (o.sash) { ctx.fillStyle = o.sash; ctx.fillRect(x - s * 0.24, y - s * 0.46, s * 0.48, s * 0.08); }
+  ctx.fillStyle = '#f0dfc2'; ctx.beginPath(); ctx.arc(x, y - s * 0.84, s * 0.17, 0, 7); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#16181a'; ctx.beginPath(); ctx.arc(x, y - s * 0.9, s * 0.18, Math.PI, 0); ctx.fill();
+  if (o.hat) { ctx.fillStyle = '#2a2d2b'; ctx.beginPath(); ctx.ellipse(x, y - s * 0.97, s * 0.3, s * 0.08, 0, 0, 7); ctx.fill(); }
+}
+
+// ====================== Yordamchi: koordinatalar ======================
+const idx = (c, r) => r * G.cols + c;
+const inb = (c, r) => c >= 0 && r >= 0 && c < G.cols && r < G.rows;
+const w2sx = (c) => (c - cam.x) * TS + W / 2, w2sy = (r) => (r - cam.y) * TS + H / 2;
+function tileAt(mx, my) { return [Math.floor((mx - W / 2) / TS + cam.x), Math.floor((my - H / 2) / TS + cam.y)]; }
+let EXP = null;                                // kashf etilgan kataklar (klientda saqlanadi)
+const deco = (i) => (Math.imul(i, 2654435761) >>> 24) % 8;
+function decodeBits(b64, n) { const bin = atob(b64), out = new Uint8Array(n); for (let k = 0; k < n; k++) out[k] = (bin.charCodeAt(k >> 3) >> (k & 7)) & 1; return out; }
+function decodeBytes(b64) { const bin = atob(b64), out = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) out[k] = bin.charCodeAt(k); return out; }
+function fog(c, r) { const i = idx(c, r); if (!S || !EXP) return 0; if (S.visSet.has(i)) return 2; return EXP[i] ? 1 : 0; }
+
+function resize() { DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; canvas.width = W * DPR; canvas.height = H * DPR; }
+addEventListener('resize', resize);
+
+// ====================== Chizish ======================
+function draw(now, dt) {
+  if ((typeof Combat !== 'undefined' && Combat.active)) { Combat.frame(now, dt); return; }
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = '#6f7774'; ctx.fillRect(0, 0, W, H);
+  if (!S || !G) return;
+  const pl = S.player;
+  if (Math.abs(cam.x - pl.tx) > 12 || Math.abs(cam.y - pl.ty) > 12) { cam.x = pl.tx + 0.5; cam.y = pl.ty + 0.5; }   // uzoq sakrashda darhol
+  cam.x = lerp(cam.x, pl.tx + 0.5, Math.min(1, dt * 7)); cam.y = lerp(cam.y, pl.ty + 0.5, Math.min(1, dt * 7));
+  const c0 = Math.max(0, Math.floor(cam.x - W / 2 / TS) - 1), c1 = Math.min(G.cols - 1, Math.ceil(cam.x + W / 2 / TS) + 1);
+  const r0 = Math.max(0, Math.floor(cam.y - H / 2 / TS) - 1), r1 = Math.min(G.rows - 1, Math.ceil(cam.y + H / 2 / TS) + 2);
+  const sc = TS / SPR;
+
+  // 1) asos
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+    const f = fog(c, r), t = G.t[idx(c, r)], x = w2sx(c), y = w2sy(r);
+    ctx.fillStyle = t === T.WATER ? ['#7d98a2', '#a9c2cc', '#bfdbe6'][f] : ['#8d938f', '#c9d0cb', '#f2efe3'][f];
+    ctx.fillRect(x, y, TS + 0.5, TS + 0.5);
+  }
+  // 2) yo'l ulanishlari
+  ctx.lineCap = 'round';
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+    const i = idx(c, r), t = G.t[i], f = fog(c, r); if (f === 0 || (t !== T.ROAD && t !== T.PLACE)) continue;
+    for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
+      const nc = c + dx, nr = r + dy; if (!inb(nc, nr)) continue; const nt = G.t[idx(nc, nr)];
+      if (t === T.PLACE && nt === T.PLACE) continue;
+      if (nt === T.ROAD || (t === T.ROAD && nt === T.PLACE)) {
+        ctx.strokeStyle = f === 2 ? 'rgba(176,150,100,.85)' : 'rgba(150,140,110,.7)'; ctx.lineWidth = TS * 0.2;
+        ctx.beginPath(); ctx.moveTo(w2sx(c + 0.5), w2sy(r + 0.5)); ctx.lineTo(w2sx(nc + 0.5), w2sy(nr + 0.5)); ctx.stroke();
+        ctx.strokeStyle = f === 2 ? 'rgba(226,208,160,.9)' : 'rgba(190,185,160,.7)'; ctx.lineWidth = TS * 0.1; ctx.stroke();
+      }
+    }
+  }
+  // 3) spritelar qatorlar bo'yicha
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+    const i = idx(c, r), t = G.t[i], f = fog(c, r); const kind = t === T.ROAD || t === T.PLACE ? T.PLAIN : t;
+    if (kind === T.WATER && f === 0) continue;
+    if (kind === T.PLAIN && (t === T.ROAD || t === T.PLACE) && f !== 2) continue;
+    const sp = sprites[kind][deco(i)], x = w2sx(c), y = w2sy(r);
+    ctx.globalAlpha = f === 0 ? 0.8 : f === 1 ? 0.92 : 1;
+    ctx.drawImage(f === 2 ? sp.c : sp.d, x, y - OV * sc, TS, (SPR + OV) * sc);
+  }
+  ctx.globalAlpha = 1;
+  // grid chiziqlari
+  ctx.strokeStyle = 'rgba(20,30,28,.10)'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let c = c0; c <= c1 + 1; c++) { const x = Math.round(w2sx(c)) + 0.5; ctx.moveTo(x, w2sy(r0)); ctx.lineTo(x, w2sy(r1 + 1)); }
+  for (let r = r0; r <= r1 + 1; r++) { const y = Math.round(w2sy(r)) + 0.5; ctx.moveTo(w2sx(c0), y); ctx.lineTo(w2sx(c1 + 1), y); }
+  ctx.stroke();
+
+  // 4) manzillar
+  for (const p of MAP.places) {
+    if (p.tx < c0 - 3 || p.tx > c1 + 3 || p.ty < r0 - 3 || p.ty > r1 + 3) continue;
+    const f = fog(p.tx, p.ty); if (f === 0 || !ICON[p.kind]) continue;
+    ctx.save(); ctx.translate(w2sx(p.tx + 0.5), w2sy(p.ty + 0.5) + TS * 0.12); const s = TS * 3 / 285; ctx.scale(s, s);
+    ctx.globalAlpha = f === 2 ? 1 : 0.75; ICON[p.kind](now); ctx.restore(); ctx.globalAlpha = 1;
+    ctx.font = `600 ${Math.max(11, TS * 0.19)}px "Segoe UI", sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(15,22,21,.85)'; ctx.lineJoin = 'round';
+    const lx = w2sx(p.tx + 0.5), ly = w2sy(p.ty - 1.15) - 4; ctx.strokeText(p.name, lx, ly); ctx.fillStyle = '#fbf3da'; ctx.fillText(p.name, lx, ly);
+  }
+
+  // 4a) protsedural joylar
+  for (let k = 0; k < G.pois.length; k++) {
+    const p = G.pois[k]; if (p.tx < c0 - 2 || p.tx > c1 + 2 || p.ty < r0 - 2 || p.ty > r1 + 2) continue;
+    const f = fog(p.tx, p.ty); if (f === 0) continue;
+    const ic = POI_ICON[p.kind]; ctx.save(); ctx.translate(w2sx(p.tx + 0.5), w2sy(p.ty + 0.62)); const s = TS * ic.k / 285; ctx.scale(s, s);
+    ctx.globalAlpha = (f === 2 ? 1 : 0.75) * (ic.a ?? 1); ic.f(now); ctx.restore(); ctx.globalAlpha = 1;
+    if (TS >= 44) {
+      const done = S.cleared.includes(k), tag = p.guardian ? (done ? ' ✔' : ' ⚔') : '';
+      ctx.font = `600 ${Math.max(10, TS * 0.15)}px "Segoe UI", sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(15,22,21,.85)'; ctx.lineJoin = 'round';
+      const lx = w2sx(p.tx + 0.5), ly = w2sy(p.ty) - TS * 0.35; ctx.strokeText(p.name + tag, lx, ly); ctx.fillStyle = p.evil ? '#ff8a80' : p.guardian && !done ? '#ffb4ae' : p.kind === 'sect' ? '#9ad0ff' : '#fbf3da'; ctx.fillText(p.name + tag, lx, ly);
+    }
+  }
+  // 4b) vazifa belgilari (ekrandan tashqarida bo'lsa — chekkada yo'nalish)
+  for (const m of S.faction.markers) {
+    if (m.kind !== 'place') continue; const t = markerTile(m.id); if (!t) continue;
+    let x = w2sx(t[0] + 0.5), y = w2sy(t[1] + 0.5) - TS * 0.9 + Math.sin(now / 250) * 4;
+    const R = W - ($('#near').style.display === 'flex' ? 320 : 40), off = x < 40 || x > R || y < 80 || y > H - 150;
+    if (off) {
+      const cx = W / 2, cy = H / 2, a = Math.atan2(y - cy, x - cx); x = clamp(x, 40, R); y = clamp(y, 80, H - 150); ctx.save(); ctx.translate(x, y); ctx.scale(1.4, 1.4); ctx.translate(-x, -y);
+      ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.fillStyle = '#e3b341'; ctx.strokeStyle = '#1d2523'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-8, -10); ctx.lineTo(-8, 10); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); ctx.restore();
+    } else {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI / 4); ctx.fillStyle = '#e3b341'; ctx.strokeStyle = '#1d2523'; ctx.lineWidth = 2; ctx.fillRect(-9, -9, 18, 18); ctx.strokeRect(-9, -9, 18, 18); ctx.restore();
+      ctx.fillStyle = '#1d2523'; ctx.font = '700 14px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('!', x, y + 5);
+    }
+  }
+  // 5) yo'l rejasi
+  if (path.length) {
+    ctx.strokeStyle = 'rgba(227,179,65,.9)'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(w2sx(pl.tx + 0.5), w2sy(pl.ty + 0.5));
+    for (const [c, r] of path) ctx.lineTo(w2sx(c + 0.5), w2sy(r + 0.5)); ctx.stroke(); ctx.setLineDash([]);
+    const [ec, er] = path[path.length - 1]; ctx.strokeStyle = '#e3b341'; ctx.lineWidth = 2; ctx.strokeRect(w2sx(ec) + 3, w2sy(er) + 3, TS - 6, TS - 6);
+  }
+  // 6) odamlar
+  const people = [];
+  for (const n of S.npcs) {
+    let a = npcAnim.get(n.id); if (!a) { a = { x: n.tx, y: n.ty }; npcAnim.set(n.id, a); }
+    a.x = lerp(a.x, n.tx, Math.min(1, dt * 5)); a.y = lerp(a.y, n.ty, Math.min(1, dt * 5)); people.push({ n, a });
+  }
+  people.sort((p, q) => p.a.y - q.a.y);
+  const jit = (id, k) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i) + k) | 0; return ((h >>> 0) % 100) / 100 - 0.5; };
+  for (const { n, a } of people) {
+    const x = w2sx(a.x + 0.5 + jit(n.id, 1) * 1.1), y = w2sy(a.y + 0.8 + jit(n.id, 2) * 0.6), s = TS * 0.44;
+    if (x < -50 || x > W + 50 || y < -50 || y > H + 50) continue;
+    human(x, y, s, n.col, { sash: n.hostile ? '#c4453f' : '#f0dfa0', sword: n.hostile || n.role.includes('disciple') || n.role.includes('guard') });
+    if (S.faction.markers.some((m) => m.kind === 'npc' && m.id === n.id)) { ctx.font = `${Math.max(14, TS * 0.26)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('☠', x, y - s * 1.2); }
+    if (n.lead) { ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y - s * 0.5, s * 0.62, 0, 7); ctx.stroke(); }
+    if (n.adj) { ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(x, y, s * 0.5, s * 0.18, 0, 0, 7); ctx.stroke(); }
+    if (hoverTile && hoverTile[0] === n.tx && hoverTile[1] === n.ty || TS > 105) { ctx.font = `${Math.max(10, TS * 0.15)}px "Segoe UI", sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(15,22,21,.85)'; ctx.strokeText(n.name, x, y + 12); ctx.fillStyle = n.hostile ? '#ffb4ae' : '#fff'; ctx.fillText(n.name, x, y + 12); }
+  }
+  // 7) o'yinchi + tanlov kvadrati
+  const px = w2sx(pl.tx + 0.5), py = w2sy(pl.ty + 0.88), pulse = 0.5 + 0.5 * Math.sin(now / 280);
+  ctx.strokeStyle = `rgba(255,255,255,${0.7 + 0.3 * pulse})`; ctx.lineWidth = 2.5; ctx.strokeRect(w2sx(pl.tx) + 2, w2sy(pl.ty) + 2, TS - 4, TS - 4);
+  ctx.strokeStyle = 'rgba(20,24,24,.6)'; ctx.lineWidth = 1; ctx.strokeRect(w2sx(pl.tx) + 5, w2sy(pl.ty) + 5, TS - 10, TS - 10);
+  human(px, py, TS * 0.62, '#20262b', { sash: '#e3b341', sword: true, hat: true });
+  if (hoverTile && inb(hoverTile[0], hoverTile[1])) { ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1.5; ctx.strokeRect(w2sx(hoverTile[0]) + 1, w2sy(hoverTile[1]) + 1, TS - 2, TS - 2); }
+
+  // 8) kecha, kitob qog'ozi, vinyeta
+  const hod = S.hod, dark = clamp((Math.cos((hod / 24) * 6.2832) + 0.25) / 1.25, 0, 1) * 0.42;
+  if (dark > 0.01) { ctx.fillStyle = `rgba(14,22,50,${dark})`; ctx.fillRect(0, 0, W, H); }
+  const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.4, W / 2, H / 2, Math.max(W, H) * 0.78); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.4)'); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  drawMini();
+}
+
+function drawMini() {
+  const m = $('#mini'), c = m.getContext('2d'), n = m.width, cs = n / 26;  // 26x26 katak oynasi
+  c.clearRect(0, 0, n, n); c.save(); c.beginPath(); c.arc(n / 2, n / 2, n / 2, 0, 7); c.clip(); c.fillStyle = '#5d6561'; c.fillRect(0, 0, n, n);
+  const pl = S.player;
+  for (let dr = -13; dr <= 13; dr++) for (let dc = -13; dc <= 13; dc++) {
+    const cc = pl.tx + dc, rr = pl.ty + dr; if (!inb(cc, rr) || !EXP[idx(cc, rr)]) continue;
+    c.fillStyle = MINI_COL[G.t[idx(cc, rr)]]; c.globalAlpha = fog(cc, rr) === 2 ? 1 : 0.75; c.fillRect((dc + 13) * cs, (dr + 13) * cs, cs + 0.5, cs + 0.5);
+  }
+  c.globalAlpha = 1;
+  for (const nn of S.npcs) { const dc = nn.tx - pl.tx, dr = nn.ty - pl.ty; c.fillStyle = nn.hostile ? '#ff4d4d' : '#ffffff'; c.fillRect((dc + 13) * cs - 1, (dr + 13) * cs - 1, cs * 0.7 + 2, cs * 0.7 + 2); }
+  c.fillStyle = '#e3b341'; c.strokeStyle = '#000'; c.beginPath(); c.arc(n / 2 + cs / 2, n / 2 + cs / 2, cs * 0.7, 0, 7); c.fill(); c.stroke(); c.restore();
+}
+function drawPortrait() {
+  const p = $('#portrait'), c = p.getContext('2d'); c.clearRect(0, 0, 168, 168);
+  c.fillStyle = '#20262b'; c.beginPath(); c.moveTo(24, 168); c.quadraticCurveTo(30, 105, 84, 100); c.quadraticCurveTo(138, 105, 144, 168); c.fill();
+  c.fillStyle = '#e3b341'; c.fillRect(70, 118, 28, 8);
+  c.fillStyle = '#f0dfc2'; c.beginPath(); c.arc(84, 70, 30, 0, 7); c.fill(); c.strokeStyle = '#161b1a'; c.lineWidth = 3; c.stroke();
+  c.fillStyle = '#16181a'; c.beginPath(); c.arc(84, 60, 32, Math.PI, 0); c.fill(); c.fillRect(52, 56, 64, 10);
+  c.fillStyle = '#161b1a'; c.beginPath(); c.arc(73, 74, 3, 0, 7); c.arc(95, 74, 3, 0, 7); c.fill();
+}
+
+const markerCache = new Map();
+function markerTile(id) {
+  if (markerCache.has(id)) return markerCache.get(id);
+  const pl = MAP.places.find((p) => p.id === id); let t = pl ? [pl.tx, pl.ty] : null;
+  if (!t) { const ks = []; G.loc.forEach((l, i) => { if (l === id) ks.push(i); }); if (ks.length) { const k = ks[Math.floor(ks.length / 2)]; t = [k % G.cols, Math.floor(k / G.cols)]; } }
+  markerCache.set(id, t); return t;
+}
+
+// ====================== Yo'l topish ======================
+function findPath(sc, sr, tc, tr) {
+  if (!inb(tc, tr) || G.t[idx(tc, tr)] === T.WATER) return null;
+  const M = 40, x0 = Math.max(0, Math.min(sc, tc) - M), x1 = Math.min(G.cols - 1, Math.max(sc, tc) + M), y0 = Math.max(0, Math.min(sr, tr) - M), y1 = Math.min(G.rows - 1, Math.max(sr, tr) + M);
+  const bw = x1 - x0 + 1, N = bw * (y1 - y0 + 1), li = (c, r) => (r - y0) * bw + (c - x0);
+  const g = new Float32Array(N).fill(Infinity), prev = new Int32Array(N).fill(-1), closed = new Uint8Array(N);
+  const hf = [], hn = [];                                        // ikkilik heap: (f, tugun)
+  const push = (f, n) => { hf.push(f); hn.push(n); let i = hf.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (hf[p] <= hf[i]) break; [hf[p], hf[i]] = [hf[i], hf[p]]; [hn[p], hn[i]] = [hn[i], hn[p]]; i = p; } };
+  const pop = () => { const n = hn[0], lf = hf.pop(), ln = hn.pop(); if (hf.length) { hf[0] = lf; hn[0] = ln; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < hf.length && hf[l] < hf[m]) m = l; if (r < hf.length && hf[r] < hf[m]) m = r; if (m === i) break; [hf[m], hf[i]] = [hf[i], hf[m]]; [hn[m], hn[i]] = [hn[i], hn[m]]; i = m; } } return n; };
+  const heur = (c, r) => Math.max(Math.abs(c - tc), Math.abs(r - tr));
+  const s0 = li(sc, sr), t0 = li(tc, tr); g[s0] = 0; push(heur(sc, sr), s0);
+  let expanded = 0;
+  while (hf.length) {
+    const cur = pop(); if (closed[cur]) continue; closed[cur] = 1; if (cur === t0 || ++expanded > 80000) break;
+    const cc = cur % bw + x0, cr = ((cur / bw) | 0) + y0;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      if (!dc && !dr) continue; const nc = cc + dc, nr = cr + dr; if (nc < x0 || nc > x1 || nr < y0 || nr > y1) continue;
+      const t = G.t[idx(nc, nr)]; if (t === T.WATER) continue;
+      const ni = li(nc, nr); if (closed[ni]) continue;
+      const nd = g[cur] + HOURS[t] + (dc && dr ? 0.3 : 0); if (nd < g[ni]) { g[ni] = nd; prev[ni] = cur; push(nd + heur(nc, nr), ni); }
+    }
+  }
+  if (prev[t0] < 0) return null;
+  const out = []; for (let c = t0; c !== s0; c = prev[c]) out.unshift([c % bw + x0, ((c / bw) | 0) + y0]);
+  return out;
+}
+
+// ====================== O'yin harakatlari ======================
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast.k); toast.k = setTimeout(() => (t.style.display = 'none'), 2400); }
+function applyState(st) {
+  st.visSet = new Set(st.vis);
+  if (st.explored) { EXP = decodeBits(st.explored, G.cols * G.rows); wmDirty = true; } else if (!EXP) EXP = new Uint8Array(G.cols * G.rows);
+  for (const i of st.vis) if (!EXP[i]) { EXP[i] = 1; wmDirty = true; }
+  const first = !S, prevS = S; S = st;
+  if (!first && typeof Sfx !== 'undefined') {                       // tovush: holat o'zgarishiga qarab
+    const fresh = st.log.filter((l) => !seenLog.has(l.day + '|' + l.hod + '|' + l.text)), kinds = new Set(fresh.map((l) => l.kind));
+    const jump = Math.abs(st.player.tx - prevS.player.tx) + Math.abs(st.player.ty - prevS.player.ty);
+    if (st.player.realmName !== prevS.player.realmName) Sfx.play('breakthrough');
+    else if (kinds.has('alert')) Sfx.play('alert'); else if (kinds.has('bad')) Sfx.play('bad'); else if (kinds.has('good')) Sfx.play('good');
+    if (jump > 2) Sfx.play('teleport'); else if (jump) Sfx.play('step');
+    if (st.player.silver !== prevS.player.silver && jump <= 2) Sfx.play('coin');
+  }
+  if (first) { cam.x = st.player.tx + 0.5; cam.y = st.player.ty + 0.5; }
+  const alive = new Set(st.npcs.map((n) => n.id)); for (const id of npcAnim.keys()) if (!alive.has(id)) npcAnim.delete(id);
+  for (const n of st.npcs) n.col = n.ideo === 'neutral' ? '#d6a53a' : n.ideo === 'righteous' ? (n.fid === 'qingyun' ? '#3f87c9' : '#4aa07c') : n.hostile ? '#7a2f2b' : '#8c8a7d';
+  renderHud(); renderNear();
+  if (st.enc && !(typeof Combat !== 'undefined' && Combat.active) && !combatEnding) startCombat(st.enc);
+  if (st.over) { $('#over').style.display = 'grid'; $('#over-msg').textContent = `${st.date.year}-yil, ${st.date.month}-oy, ${st.date.day}-kun. Dunyo sensiz davom etadi.`; }
+}
+function renderHud() {
+  const p = S.player, d = S.date;
+  const sb = $('#sp-badge'); sb.style.display = S.sp > 0 ? 'inline' : 'none'; sb.textContent = S.sp;
+  const F = S.faction;
+  $('#c-fac').textContent = F.id ? `${F.name} · ${F.rank} · hissa ${F.contrib}` : 'Mustaqil sargardon';
+  const hb = $('#b-hall'); hb.style.display = F.here.length ? 'inline-block' : 'none';
+  hb.innerHTML = '<kbd>G</kbd>🏯 ' + esc(F.here.map((f) => f.name).join(' / ') || 'Zal') + (F.base && F.markers.some((m) => m.kind === 'place' && m.id === F.base) ? ' ✅' : '');
+  const bp = $('#b-place'); bp.style.display = S.place ? 'inline-block' : 'none'; if (S.place) bp.innerHTML = '<kbd>E</kbd>🏮 ' + esc(S.place.name);
+  $('#c-realm').textContent = p.realmName; $('#c-date').textContent = `${d.year}-yil ${d.month}-oy ${d.day}-kun · ${String(S.hod).padStart(2, '0')}:00 · ${S.season} ${S.weather.icon}`; $('#c-date').title = S.weather.name;
+  $('#c-silver').textContent = p.silver; $('#c-herb').textContent = p.herb; $('#c-ore').textContent = p.ore; $('#c-xp').style.width = clamp(p.progress / p.threshold, 0, 1) * 100 + '%';
+  $('#c-xp').parentNode.title = `Mashq: ${p.progress}/${p.threshold}`;
+  for (const [k, v, m] of [['v', p.vit, p.vitMax], ['e', p.energy, p.energyMax], ['f', p.focus, p.focusMax]]) { $('#b' + k).style.width = clamp(v / m, 0, 1) * 100 + '%'; $('#t' + k).textContent = `${v}/${m}`; }
+  const t = S.tile;
+  $('#tileinfo').innerHTML = `<h4>${esc(t.loc ?? t.terrain)} <span style="color:var(--dim);font-weight:400">N${p.ty} E${p.tx}</span></h4>
+    <div class="kv"><span>Qi</span><b>${t.qi}</b></div><div class="kv"><span>Feng-shui</span><b>${t.fs}</b></div><div class="kv"><span>O't</span><b>${t.herb}</b></div><div class="kv"><span>Ruda</span><b>${t.ore}</b></div>
+    <div class="kv"><span>Relyef</span><b>${esc(t.terrain)}</b></div>
+    <div class="kv"><span>Hudud</span><b>${esc(t.region.name)}${t.region.tier ? ' · ' + t.region.tier : ''}</b></div>
+    ${t.poi ? `<div style="margin-top:4px;color:${t.poi.guardian && !t.poi.cleared ? '#ffb4ae' : '#8ee0b0'}">${POI_NAME[t.poi.kind]}${t.poi.market ? ' · bozor' : ''}${t.poi.smith ? ' · temirxona' : ''}${t.poi.guardian ? (t.poi.cleared ? ' · tozalangan' : " · qo'riqchi (Z)") : ''}</div>` : ''}`;
+  const log = $('#log'); log.innerHTML = S.log.slice(-5).map((l, i, a) => `<div class="${l.kind}" style="opacity:${0.35 + 0.65 * (i + 1) / a.length}">${esc(l.text)}</div>`).join('');
+  for (const l of S.log) seenLog.add(l.day + '|' + l.hod + '|' + l.text);
+}
+let nearMin = (() => { try { return localStorage.getItem('wuxia.nearMin') === '1'; } catch (e) { return false; } })();
+function toggleNear() { nearMin = !nearMin; try { localStorage.setItem('wuxia.nearMin', nearMin ? '1' : '0'); } catch (e) { /* */ } if (S) renderNear(); }
+function renderNear() {
+  const box = $('#near'), list = S.npcs.filter((n) => Math.hypot(n.tx - S.player.tx, n.ty - S.player.ty) <= 4).sort((a, b) => Math.hypot(a.tx - S.player.tx, a.ty - S.player.ty) - Math.hypot(b.tx - S.player.tx, b.ty - S.player.ty)).slice(0, 6);
+  box.style.display = list.length ? 'flex' : 'none'; box.classList.toggle('min', nearMin);
+  const head = `<div class="head" onclick="toggleNear()" title="Yig'ish / ochish (N)"><span><kbd style="background:#e8efe9;color:#1d2523;border-radius:3px;padding:0 4px;font-weight:700">N</kbd> Atrofdagilar: ${list.length}</span><span>${nearMin ? '▸' : '▾'}</span></div>`;
+  if (nearMin) { box.innerHTML = head; return; }
+  box.innerHTML = head + list.map((n) => `<div class="npc ${n.hostile ? 'hostile' : ''}"><div class="nm" style="cursor:pointer" title="Batafsil" onclick="openNpc('${n.id}')"><span class="dot" style="background:${n.col}"></span>${esc(n.name)} <span style="opacity:.6">ℹ</span>${n.lead ? ' 👑' : ''}${S.faction.markers.some((m) => m.kind === 'npc' && m.id === n.id) ? ' <span style="color:#ffd479">☠ nishon</span>' : ''}${n.wanted ? ` <span style="color:#ffd479" title="Boshiga mukofot">💰${n.wanted}</span>` : ''}</div>
+    <div class="sub">${esc(ROLE_NAME[n.role] ?? n.role)} · ${n.realm}-bosqich${n.faction ? ' · ' + esc(n.faction) : ''}</div>
+    ${n.adj ? `<div class="acts"><button onclick="npcAct('talk','${n.id}')">💬 Gap</button><button onclick="npcAct('gift','${n.id}')">🎁 20</button>${n.role === 'child' ? '' : `<button class="war" onclick="npcAct('fight','${n.id}')">⚔ Jang</button>`}</div>` : '<div class="sub" style="margin:0">Yaqinlashing (qo\'shni katak)</div>'}</div>`).join('');
+}
+
+// ---- NPC paneli: kim u, nima qilyapti, sizga qanday qaraydi ----
+const ROLE_NAME = { sect_leader: 'Sekta rahbari', elder: 'Oqsoqol', inner_disciple: 'Ichki shogird', outer_disciple: 'Tashqi shogird', bandit_chief: 'Qaroqchi boshlig\'i', bandit_lieutenant: 'Qaroqchi o\'ng qo\'li',
+  bandit: 'Qaroqchi', magistrate: 'Hokim', guard_captain: 'Qo\'riqchilar boshlig\'i', guard: 'Qo\'riqchi', farmer: 'Dehqon', merchant: 'Savdogar', innkeeper: 'Mehmonxonachi', doctor: 'Tabib', blacksmith: 'Temirchi', hermit: 'Zohid', wanderer: 'Sargardon', child: 'Bola' };
+const ACT_NAME = { sleep: 'uxlayapti', eat: 'ovqatlanyapti', work: 'ishlayapti', train: 'mashq qilyapti', socialize: 'suhbatlashyapti', heal: 'davolanyapti', flee: 'qochyapti', travel: "yo'lda", idle: 'bo\'sh',
+  search: 'xaroba titkilayapti', play: "o'ynayapti", seek_master: 'ustoz izlayapti', attack: 'hujum qilyapti', hunt: 'kimnidir izlayapti' };
+const BOND_NAME = { parent: 'ota-onasi', child: 'farzandi', sibling: "tug'ishgani", spouse: "turmush o'rtog'i", master: 'ustozi', student: 'shogirdi', family: 'oilasi', friend: "do'sti", rival: 'raqibi', lover: 'sevgilisi', sworn: 'qasamdosh birodari' };
+async function openNpc(id) {
+  let d; try { d = await (await fetch('/api/game/npc?id=' + encodeURIComponent(id))).json(); } catch (e) { return; }
+  if (d.error) { toast(d.error); return; }
+  const meter = (label, v, col) => `<div class="kv" style="display:flex;justify-content:space-between;gap:8px"><span>${label}</span><b style="color:${v ? col : 'var(--dim)'}">${v}</b></div>`;
+  const act = d.action.startsWith('op:') ? 'fraksiya topshirig\'ida' : ACT_NAME[d.action] ?? d.action;
+  $('#m-title').textContent = d.name + (d.lead ? ' 👑' : ''); $('#modal').style.display = 'grid';
+  $('#m-body').innerHTML = `<div class="item"><b>${esc(ROLE_NAME[d.role] ?? d.role)}</b>${d.faction ? ' · ' + esc(d.faction) : ' · mustaqil'} · ${d.age} yosh · ${esc(d.realmName)}<br>
+      <small>${esc(d.location)} · hozir ${esc(act)}${d.injury > 0.2 ? ' · 🩸 yarador' : ''}</small><br>Kayfiyat: <b>${esc(d.mood)}</b>${d.wanted && d.wanted.length ? `<br><span style="color:#ffd479">💰 Qidiruvda: ${d.wanted.map((x) => `${x.reward} kumush (${esc(x.by)})`).join(', ')}</span>` : ''}</div>
+    <h4 style="margin:10px 0 6px">Sizga munosabati: <span style="color:var(--gold)">${esc(d.relLabel)}</span></h4>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px 14px">${meter('Ishonch', d.rel.trust, '#8ee0b0')}${meter('Hurmat', d.rel.respect, '#9ad0ff')}${meter('Mehr', d.rel.affection, '#8ee0b0')}${meter('Nafrat', d.rel.hatred, '#ffb4ae')}${meter("Qo'rquv", d.rel.fear, '#ffb4ae')}${meter('Qarz', d.rel.debt, '#e3b341')}</div>
+    <h4 style="margin:10px 0 6px">Maqsadlari</h4>${d.goals ? (d.goals.length ? d.goals.map((g) => `<div class="item">🎯 ${esc(g)}</div>`).join('') : '<div class="item">Hozircha katta maqsadi yo\'q — kundalik hayot bilan band.</div>') : '<div class="item" style="color:var(--dim)">Noma\'lum — avval ishonchini qozoning (suhbat, sovg\'a, yordam).</div>'}
+    ${d.traits && d.traits.length ? `<div class="item">Xarakteri: ${esc(d.traits.join(', '))}</div>` : ''}
+    <div class="item">⚔ Kuchi: <b>${d.power}</b>${d.aff ? ` · iste'dodi: <b>${esc(d.aff)}</b>` : ''}${d.techs.length ? `<br>Uslublari: ${d.techs.map((t) => `${esc(t.name)} <small>(${'I'.repeat(t.tier)})</small>`).join(', ')}` : '<br><span style="color:var(--dim)">Uslub bilmaydi</span>'}</div>
+    ${d.bonds.length ? `<h4 style="margin:10px 0 6px">Yaqinlari</h4><div class="item">${d.bonds.map((b) => `${esc(b.name)} <small>(${BOND_NAME[b.type] ?? b.type}${b.alive ? '' : ', marhum'})</small>`).join(', ')}</div>` : ''}
+    <h4 style="margin:10px 0 6px">Siz haqingizda eslaydi</h4>${d.memories.length ? d.memories.map((m) => `<div class="item" style="color:${m.harm ? '#ffb4ae' : '#8ee0b0'}">${m.day}-kun: ${esc(m.text)}</div>`).join('') : '<div class="item" style="color:var(--dim)">Sizni hali yaxshi tanimaydi.</div>'}
+    ${d.adj ? `<div style="margin-top:10px"><button class="btn" onclick="closeModal();npcAct('talk','${d.id}')">💬 Gaplashish</button> <button class="btn" onclick="closeModal();npcAct('gift','${d.id}')">🎁 20 kumush</button>${(S.quests ?? []).filter((q) => q.taken && q.status === 'open' && (q.kind === 'theft' || q.kind === 'murder') && q.giver !== d.id).map((q) => ` <button class="btn" style="border-color:#ffb4ae" onclick="closeModal();api({t:'accuse',id:'${d.id}',q:'${q.id}'})">⚖ Ayblash: ${esc(q.title)}</button>`).join('')}${d.injury > 0.2 ? ` <button class="btn" onclick="closeModal();api({t:'medicine',id:'${d.id}'})">💊 Dori berish</button>` : ''}${S.inventory.items.filter((x) => x.kind === 'manual').map((x) => ` <button class="btn" title="${esc(x.desc)}" onclick="closeModal();api({t:'givemanual',id:'${d.id}',item:'${x.id}'})">${x.icon} ${esc(x.name)} berish</button>`).join('')}</div>` : '<div class="item" style="color:var(--dim);margin-top:8px">Gaplashish uchun yaqinlashing.</div>'}`;
+}
+
+let combatEnding = false;
+function startCombat(enc) {
+  walkId++; path = []; $('#near').style.display = 'none';
+  Combat.start(enc, async (res) => {
+    combatEnding = true;
+    try {
+      const q = new URLSearchParams({ t: 'enc_end', result: res.result, hp: res.hp, energy: res.energy, focus: res.focus, herbs: res.herbsUsed, spare: res.spare ? '1' : '0' });
+      const r = await (await fetch('/api/game/act?' + q)).json(); applyState(r.state);
+    } catch (e) { toast("Server bilan aloqa yo'q"); } finally { combatEnding = false; }
+  });
+}
+let chain = Promise.resolve(), pending = 0;
+function api(params) {
+  if (pending >= 4) return Promise.resolve(null);        // haddan ko'p bosilganda ortiqchalarini tashlaymiz
+  pending++; busy = true;
+  const run = chain.then(async () => {
+    try { const r = await (await fetch('/api/game/act?' + new URLSearchParams(params))).json(); if (!r.ok && r.msg) toast(r.msg); applyState(r.state); return r; }
+    catch (e) { toast("Server bilan aloqa yo'q"); return null; }
+    finally { pending--; busy = pending > 0; }
+  });
+  chain = run.catch(() => {}); return run;
+}
+function npcAct(t, id) { walkId++; path = []; api({ t, id }); }
+async function doAct(a) { walkId++; path = []; if (typeof Sfx !== 'undefined') Sfx.play(a === 'cultivate' ? 'cultivate' : a === 'explore' ? 'explore' : 'click'); if (a === 'cultivate') await api({ t: 'cultivate', h: 4 }); else if (a === 'rest') await api({ t: 'rest', h: 4 }); else await api({ t: a }); }
+async function walk(p) {
+  const id = ++walkId; path = p.slice();
+  while (path.length && id === walkId) {
+    const [c, r] = path[0], pl = S.player, dx = Math.sign(c - pl.tx), dy = Math.sign(r - pl.ty);
+    const before = new Set(seenLog), knownHostile = new Set(S.npcs.filter((n) => n.hostile).map((n) => n.id));
+    const res = await api({ t: 'move', dx, dy });
+    if (!res || !res.ok) { path = []; return; }
+    if (id !== walkId) return; path.shift();
+    if (S.enc) { path = []; return; }
+    if (S.log.some((l) => !before.has(l.day + '|' + l.hod + '|' + l.text) && (l.kind === 'alert' || l.kind === 'bad'))) { toast('Voqea! Yo\'l to\'xtatildi.'); path = []; return; }
+    if (S.npcs.some((n) => n.hostile && !knownHostile.has(n.id) && Math.hypot(n.tx - S.player.tx, n.ty - S.player.ty) <= 3.5)) { toast('Dushman ko\'rindi!'); path = []; return; }
+    await sleep(70);
+  }
+}
+async function newGame() { $('#over').style.display = 'none'; seenLog.clear(); npcAnim.clear(); S = null; path = []; applyState(await (await fetch('/api/game/new')).json()); }
+
+// ====================== Kirish ======================
+canvas.addEventListener('mousemove', (e) => { if ((typeof Combat !== 'undefined' && Combat.active)) return; hoverTile = tileAt(e.clientX, e.clientY); const tip = $('#tip'); if (!S || !inb(hoverTile[0], hoverTile[1])) { tip.style.display = 'none'; return; }
+  const i = idx(hoverTile[0], hoverTile[1]), f = fog(hoverTile[0], hoverTile[1]); const names = ['Dala', "O'rmon", "Tog'", 'Suv', "Yo'l", 'Manzil'];
+  const here = S.npcs.filter((n) => n.tx === hoverTile[0] && n.ty === hoverTile[1]).map((n) => n.name);
+  tip.innerHTML = f === 0 ? "Noma'lum hudud" : `${names[G.t[i]]} · ${HOURS[G.t[i]] > 50 ? "o'tib bo'lmaydi" : HOURS[G.t[i]] + ' soat'}${here.length ? '<br>' + esc(here.join(', ')) : ''}`;
+  tip.style.display = 'block'; tip.style.left = Math.min(e.clientX + 14, W - 180) + 'px'; tip.style.top = e.clientY + 14 + 'px'; });
+canvas.addEventListener('mouseleave', () => { hoverTile = null; $('#tip').style.display = 'none'; });
+canvas.addEventListener('click', (e) => {
+  if (!S || S.over || (typeof Combat !== 'undefined' && Combat.active)) return; const [c, r] = tileAt(e.clientX, e.clientY); if (!inb(c, r)) return;
+  const pl = S.player; if (c === pl.tx && r === pl.ty) { doAct('explore'); return; }
+  const p = findPath(pl.tx, pl.ty, c, r); if (!p) { toast("U yerga yo'l yo'q"); return; } walk(p);
+});
+canvas.addEventListener('wheel', (e) => { e.preventDefault(); if ((typeof Combat !== 'undefined' && Combat.active)) return; TS = clamp(TS * Math.exp(-e.deltaY * 0.001), 40, 130); }, { passive: false });
+$('#z-out').onclick = () => (TS = clamp(TS / 1.2, 40, 130)); $('#z-in').onclick = () => (TS = clamp(TS * 1.2, 40, 130));
+document.querySelectorAll('#hot .btn').forEach((b) => (b.onclick = () => (b.dataset.a === 'inv' ? openInv() : doAct(b.dataset.a))));
+$('#b-intel').onclick = openIntel; $('#b-letters').onclick = openLetters; $('#b-skills').onclick = openSkills; $('#b-place').onclick = openPlace; $('#b-map').onclick = openWorldMap; $('#b-hall').onclick = openHall;
+function cycleSound() { if (typeof Sfx === 'undefined') return; Sfx.cycle(); $('#b-sound').textContent = Sfx.icon(); toast('Tovush: ' + Sfx.label()); }
+$('#b-sound').onclick = cycleSound;
+if (typeof Sfx !== 'undefined') $('#b-sound').textContent = Sfx.icon();
+document.addEventListener('click', (e) => { if (typeof Sfx !== 'undefined' && e.target.closest && e.target.closest('.btn') && e.target.id !== 'b-sound') Sfx.play('click'); });
+$('#b-save').onclick = async () => { const r = await (await fetch('/api/game/save')).json(); toast(r.ok ? `Saqlandi (${Math.round(r.bytes / 1024)} KB)` : 'Saqlab bo\'lmadi'); };
+$('#b-new').onclick = () => { if (confirm("Yangi o'yin boshlansinmi? Joriy o'yin o'chadi.")) newGame(); };
+let skillsOpen = false;
+function openSkills() {
+  if (!S) return; skillsOpen = true; $('#modal').style.display = 'grid'; $('#m-title').textContent = `Ko'nikmalar · ${S.sp} ochko`;
+  $('#m-body').innerHTML = '<div class="item" style="border-left-color:var(--gold)"><small>Ochko: har yutuq uchun 1, boss uchun 2. Daraja n → n+1 narxi n ochko. Har daraja: zarar +18%, sarf −5%, sovish −6%.</small></div>' +
+    Combat.SK.map((s) => { const lv = S.skills[s.id] ?? 1, locked = S.player.realm < s.need, max = lv >= 5;
+      return `<div class="item" style="display:flex;gap:12px;align-items:center;${locked ? 'opacity:.5' : ''}"><div style="flex:1"><b>${s.key}. ${esc(s.name)}</b> <span style="color:var(--gold)">${'●'.repeat(lv)}${'○'.repeat(5 - lv)}</span><small>${esc(s.info)}${locked ? ` · ${s.need}-bosqichda ochiladi` : ''}</small></div>
+        <button class="btn" ${locked || max || S.sp < lv ? 'disabled style="opacity:.4;cursor:default"' : `onclick="upSkill('${s.id}')"`}>${max ? 'Maksimum' : lv + ' ochko'}</button></div>`; }).join('');
+}
+async function upSkill(id) { await api({ t: 'skill_up', id }); if (skillsOpen) openSkills(); }
+let hallOpen = false;
+const IDEO = { righteous: "To'g'ri yo'l sektasi: mashq tezligi +15–30%, ustoz saboqlari, oylik ulush. Qaroqchilar dushmaningiz bo'ladi.", demonic: "Qaroqchilar to'dasi: o'lpon va talon vazifalari, yo'ldagi qaroqchilar sizga tegmaydi. Sektalar sizni yomon ko'radi.", neutral: "Imperator xizmati: qo'riqchi maoshi, tartib saqlash vazifalari." };
+function taskHtml(t) {
+  const pct = Math.round(100 * Math.min(1, Math.max(0, t.have) / Math.max(1, t.need)));
+  const places = t.places ? '<br>' + t.places.map((p) => (p.done ? '✔ ' : '○ ') + esc(p.name)).join(' · ') : '';
+  return `<div class="item ${t.done ? '' : 'open'}" style="${t.done ? 'border-left-color:#4aa07c' : ''}"><small>${t.done ? 'Bajarildi — bazada topshiring' : t.until + '-kungacha'} · mukofot: ${t.reward.contrib} hissa${t.reward.silver ? ', ' + t.reward.silver + ' kumush' : ''}</small>
+    <b>${esc(t.title)}</b> — ${esc(t.desc)}${places}<div class="xp" style="margin-top:6px"><i style="width:${pct}%"></i></div><small>${t.have}/${t.need}</small></div>`;
+}
+function openHall() {
+  if (!S) return; const F = S.faction;
+  if (!F.here.length) { toast("Bu yerda fraksiya bazasi yo'q. Sekta, lager yoki shaharga boring."); return; }
+  hallOpen = true; $('#modal').style.display = 'grid'; $('#m-title').textContent = '🏯 ' + F.here.map((f) => f.name).join(' / ');
+  const btn = (label, js, on = true, red = false) => `<button class="btn" style="${red ? 'border-color:#8f3b37;color:#ffb4ae;' : ''}${on ? '' : 'opacity:.4;cursor:default'}" ${on ? `onclick="${js}"` : 'disabled'}>${label}</button>`;
+  $('#m-body').innerHTML = F.here.map((f) => {
+    if (!f.member) return `<div class="item"><b>${esc(f.name)}</b><small>Rahbar: ${esc(f.leader)} · a'zolar: ${f.members}</small><div style="margin:6px 0">${esc(IDEO[f.ideology] ?? '')}</div>
+      <div style="color:${f.join.ok ? '#8ee0b0' : '#ffb4ae'};margin-bottom:8px">${esc(f.join.why)}</div>${btn("Qo'shilish", `hallAct({t:'join',f:'${f.id}'})`, f.join.ok)}</div>`;
+    const ex = Object.entries(F.exchange).map(([k, x]) => btn(`${esc(x.name)} — ${x.cost}`, `hallAct({t:'exch',what:'${k}'})`, F.contrib >= x.cost)).join(' ');
+    return `<div class="item" style="border-left-color:var(--gold)"><b>${esc(F.rank)}</b> · hissa <b style="color:var(--gold)">${F.contrib}</b> (jami ${F.totalContrib}) · rahbar: ${esc(F.leader)} · a'zolar: ${F.members} · mashq ×${F.cultMult.toFixed(2)}${F.wars.length ? `<div style="color:#ff8a80;margin-top:4px">⚔ Urushda: ${esc(F.wars.join(', '))}</div>` : ''}${F.allies.length ? `<div style="color:#8ee0b0;margin-top:2px">🤝 Ittifoqchilar: ${esc(F.allies.join(', '))}</div>` : ''}${F.tourney ? `<div style="margin-top:6px;padding:6px 8px;border:1px solid var(--gold);border-radius:8px">🏆 Musobaqa: <b>${esc(F.tourney.vs)}</b> bilan, ${F.tourney.inDays} kundan keyin. ${F.tourney.player ? (F.tourney.player === 'win' ? '<span style="color:#8ee0b0">Siz chempion sifatida g\'alaba qozondingiz!</span>' : '<span style="color:#ffb4ae">Siz bellashdingiz.</span>') : btn('⚔ Sekta chempioni bo\'lish', "closeModal();api({t:'tourney'})", F.tourney.inDays > 0)}</div>` : ''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${btn('📜 Vazifa olish', "hallAct({t:'task'})", F.tasks.length < 2)} ${btn('✅ Topshirish', "hallAct({t:'turnin'})")} ${btn(F.lessonIn ? `🧘 Saboq (${F.lessonIn} kundan keyin)` : '🧘 Ustozdan saboq — 5 hissa', "hallAct({t:'lesson'})", !F.lessonIn && F.contrib >= 5)}</div>
+      <div style="margin-top:8px"><small>Xazina:</small><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${ex}</div></div></div>
+      ${F.tasks.length ? F.tasks.map(taskHtml).join('') : '<div class="item">Faol vazifa yo\'q. «Vazifa olish» tugmasini bosing.</div>'}
+      <div style="text-align:right;margin-top:8px">${btn('Fraksiyani tark etish', "if(confirm('Rostdan tark etasizmi? Rahbar buni unutmaydi.'))hallAct({t:'leave'})", true, true)}</div>`;
+  }).join('');
+}
+async function hallAct(params) { await api(params); if (hallOpen) openHall(); }
+// ---- Joy ichi: taverna, mehmonxona, savdo palatasi, qo'llanmalar, teleport ----
+let placeOpen = false;
+function openPlace() {
+  if (!S) return; const P = S.place;
+  if (!P) { toast("Bu yerda kiradigan joy yo'q. Shahar, qishloq, sekta yoki uyaga boring."); return; }
+  placeOpen = true; $('#modal').style.display = 'grid'; $('#m-title').textContent = `🏮 ${P.name} — ${P.kindName} (xavf ${P.tier})`;
+  const btn = (label, js, on = true) => `<button class="btn" style="padding:4px 10px;${on ? '' : 'opacity:.4;cursor:default'}" ${on ? `onclick="${js}"` : 'disabled'}>${label}</button>`;
+  const sec = (icon, title, sub, body) => `<div class="item" style="border-left-color:var(--gold)"><b>${icon} ${title}</b><small>${sub}</small><div style="margin-top:6px">${body}</div></div>`;
+  const silver = S.player.silver, out = [`<div style="color:var(--dim);margin-bottom:8px">Aholi: ${P.people} kishi · 🪙 ${silver}</div>`];
+  const HQ = (S.quests ?? []).filter((q) => q.place === P.id && q.status === 'open');
+  if (HQ.length) out.push(sec('📌', 'Iltimoslar', 'Shu joy aholisining muammolari', HQ.map((q) => questHtml(q, true)).join('')));
+  const L = P.law;
+  if (L) {
+    const R = L.rep, rc = R.score >= 18 ? '#8ee0b0' : R.score <= -18 ? '#ffb4ae' : 'var(--dim)';
+    const own = L.owner ? (L.owner.occupied ? `<div style="color:#ffb4ae;margin-top:4px">⚑ Bu qishloqni <b>${esc(L.owner.name)}</b> bosib olgan (${L.owner.since}-kundan, nazorat ${L.owner.control}%). Qishloq o'lpon to'laydi. Bosqinchilarni shu yerda yengsangiz — nazorat zaiflashadi${L.owner.prev ? `; asl egasi: ${esc(L.owner.prev)}` : ''}.</div>` : `<div style="color:var(--dim);margin-top:4px">⚑ Egasi: ${esc(L.owner.name)}</div>`) : '';
+    const fine = L.fine ? `<div style="color:#ffb4ae;margin-top:6px">⚠ Siz qidiruvdasiz! Qo'riqchilar hibsga olishga urinadi. ${btn(`Jarimani to'lash — ${L.fine}🪙`, "placeAct({t:'fine'})", silver >= L.fine)}</div>` : '';
+    const REASON = { murder: 'qotillik', theft: "o'g'rilik", raid: 'bosqin' };
+    const board = L.board.length ? L.board.map((b) => `<div style="display:flex;gap:8px;margin-top:3px${b.you ? ';color:#ffb4ae' : ''}"><span style="flex:1">💰 <b>${esc(b.name)}</b> <small>(${REASON[b.reason] ?? b.reason}${b.you ? '' : ` · ${b.realm}-bosqich · oxirgi marta: ${esc(b.where)}`}${b.hunter ? ` · ortidan: ${esc(b.hunter)}` : ''})</small></span><b>${b.reward}🪙</b></div>`).join('') : "<div style=\"color:var(--dim)\">Hozircha e'lon yo'q.</div>";
+    out.push(sec('📜', "Qonun va obro'", `Obro'ingiz: <b style="color:${rc}">${esc(R.label)} (${R.score > 0 ? '+' : ''}${R.score})</b> · sizni taniydi: ${R.known} kishi${L.lawName ? ' · qonun: ' + esc(L.lawName) : " · qonun yo'q"}`,
+      own + fine + `<div style="margin-top:6px"><b>E'lonlar taxtasi</b> <small style="color:var(--dim)">— nishonni yengsangiz, mukofot sizniki</small></div>` + board));
+  }
+  const Z = P.settle;
+  if (Z) {
+    const bar = (label, v, col) => `<div style="display:flex;align-items:center;gap:6px"><span style="width:92px;color:var(--dim)">${label}</span><div style="flex:1;height:6px;background:#0003;border-radius:3px"><i style="display:block;height:100%;width:${Math.max(0, Math.min(100, v))}%;background:${col};border-radius:3px"></i></div><b style="width:30px;text-align:right">${v}</b></div>`;
+    const foodPct = Math.min(100, Math.round(Z.food * 100 / 45));
+    out.push(sec(Z.famine ? '🍚' : '🏘', Z.famine ? 'Holati: OCHARCHILIK' : 'Joy holati', `Aholi ${Z.pop}/${Z.cap} · ${Z.couples} oila · ${Z.children} bola · zaxira ${Z.food} kunlik`,
+      bar('Oziq-ovqat', foodPct, foodPct < 25 ? '#e5484d' : '#7fc98f') + bar('Xavfsizlik', Z.security, Z.security < 30 ? '#e5484d' : '#9ad0ff') + bar('Farovonlik', Z.prosperity, '#e3b341') + bar('Baxt', Z.happiness, Z.happiness < 32 ? '#e5484d' : '#c9a0ff')
+      + `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px 12px">${Z.prices.map((x) => `<span>${esc(x.name)} <b style="color:${x.m > 1.15 ? '#ffb4ae' : x.m < 0.9 ? '#8ee0b0' : 'inherit'}">×${x.m}</b></span>`).join('')}</div>`));
+  }
+  if (P.services.includes('tavern')) out.push(sec('🍶', 'Taverna', "Mish-mish: yashirin joylar xaritada belgilanadi, mahalliylar sirlarini aytadi.", btn(`Mish-mish eshitish — ${P.rumorCost}🪙`, "placeAct({t:'rumor'})", silver >= P.rumorCost)));
+  if (P.services.includes('inn')) out.push(sec('🛏', 'Mehmonxona', "8 soat tunash: kuch va diqqat to'liq tiklanadi, jarohat yengillashadi.", btn(`Tunash — ${P.innCost}🪙`, "placeAct({t:'inn'})", silver >= P.innCost)));
+  if (P.services.includes('market')) {
+    const R = P.rare;
+    const rare = !R?.seller ? `<div style="color:#ff948e">Noyob savdo yo'q — savdogar yo'q (balki halok bo'lgan).</div>`
+      : `<div style="color:var(--dim);margin-bottom:4px">${esc(R.seller)} sotadi · yangi tovar ${R.refreshIn} kundan keyin</div>` + R.items.map((x) => { const d = S.inventory.recipes.find((r) => r.out === x.id); const icon = d?.icon ?? '◆';
+        return `<div style="display:flex;gap:8px;align-items:center;margin:3px 0"><span style="flex:1">${icon} ${esc(itemName(x.id))} <small style="display:inline;color:var(--dim)">× ${x.left}</small></span>${btn(`${x.price}🪙`, `placeAct({t:'buyrare',id:'${x.id}'})`, x.left > 0 && silver >= x.price)}</div>`; }).join('');
+    out.push(sec('🏪', P.kind === 'camp' ? 'Qora bozor' : 'Savdo palatasi', 'Har hafta yangilanadigan qimmatli tovarlar.', rare + `<div style="margin-top:6px">${btn('Oddiy bozor (sotish/olish)', "openInv('market')")}</div>`));
+  }
+  if (P.services.includes('forge')) out.push(sec('🔨', 'Temirxona', 'Qurol, zirh va tumor yasash.', btn('Temirxonaga kirish', "openInv('craft')")));
+  if (P.library) out.push(sec('📜', "Qo'llanmalar markazi", P.library[0]?.member ? "Siz shu sekta a'zosisiz — 50% chegirma." : "Risolalar: ko'nikma ochkosi yoki tajriba.",
+    P.library.map((m) => `<div style="display:flex;gap:8px;align-items:center;margin:3px 0"><span style="flex:1"><b>${esc(m.name)}</b><small>${esc(m.desc)}</small></span>${btn(`${m.price}🪙`, `placeAct({t:'buyman',id:'${m.id}'})`, silver >= m.price)}</div>`).join('')));
+  if (P.teleport) out.push(sec('🌀', 'Teleport darvozasi', "Faqat o'zingiz kashf etgan shahar va sektalarga (2 soat).",
+    P.teleport.slice(0, 14).map((x) => `<div style="display:flex;gap:8px;align-items:center;margin:3px 0;${x.known ? '' : 'opacity:.45'}"><span style="flex:1">${x.kind === 'sect' ? '🏯' : '🏙'} ${esc(x.name)} <small style="display:inline;color:var(--dim)">${x.dist} katak${x.known ? '' : " · noma'lum"}</small></span>${x.known ? btn(`${x.cost}🪙`, `placeAct({t:'tp',id:'${x.id}'},true)`, silver >= x.cost) : ''}</div>`).join('')));
+  if (P.services.includes('hall') && S.faction.here.length) out.push(sec('🏯', 'Fraksiya zali', 'Qo\'shilish, vazifalar, saboq, xazina.', btn('Zalga kirish (G)', 'openHall()')));
+  $('#m-body').innerHTML = out.join('');
+}
+function itemName(id) { const it = S.inventory.items.find((x) => x.id === id) || S.inventory.recipes.find((r) => r.out === id); return it ? (it.name ?? it.outName) : ({ spirit_herb: "Ruh o'ti", crystal: 'Qi kristali', manual_ancient: 'Qadimiy usul risolasi', qi_pill: 'Qi dorisi' }[id] ?? id); }
+async function placeAct(p, close) { await api(p); if (close) { closeModal(); return; } if (placeOpen) openPlace(); }
+
+let invOpen = false, invTab = 'items';
+const SLOT_NAME = { weapon: 'Qurol', armor: 'Zirh', charm: 'Tumor' };
+function statsText(st) {
+  if (!st) return '';
+  const parts = []; if (st.atk) parts.push('hujum +' + st.atk); if (st.def) parts.push('himoya +' + Math.round(st.def * 100) + '%'); if (st.vit) parts.push('vitality +' + st.vit); if (st.focus) parts.push('focus +' + st.focus); if (st.energy) parts.push('energy +' + st.energy);
+  return parts.join(', ');
+}
+function openInv(tab) {
+  if (!S) return; if (tab) invTab = tab; invOpen = true; const I = S.inventory;
+  $('#modal').style.display = 'grid'; $('#m-title').textContent = '🎒 Inventar';
+  const b = (label, js, on = true) => `<button class="btn" style="padding:3px 9px;${on ? '' : 'opacity:.4;cursor:default'}" ${on ? `onclick="${js}"` : 'disabled'}>${label}</button>`;
+  const tabs = [['items', 'Buyumlar'], ['craft', 'Hunar'], ['market', 'Bozor']].map(([k, n]) => `<button class="btn" style="${invTab === k ? 'border-color:var(--gold);color:var(--gold)' : ''}" onclick="openInv('${k}')">${n}</button>`).join(' ');
+  let body = '';
+  if (invTab === 'items') {
+    const eq = Object.entries(I.equip).map(([slot, it]) => `<div class="item" style="flex:1;min-width:150px;${it ? 'border-left-color:var(--gold)' : ''}"><small>${SLOT_NAME[slot]}</small>${it ? `${it.icon} <b>${esc(it.name)}</b><small>${statsText(it.stats)}</small>${b('Yechish', `invAct({t:'unequip',slot:'${slot}'})`)}` : "<span style='color:var(--dim)'>bo'sh</span>"}</div>`).join('');
+    const bon = statsText(I.bonus), buffs = [I.buffs.power ? `🔴 Kuch dorisi: ${I.buffs.power} jang` : '', I.buffs.breakthrough ? '🟡 Yutuq dorisi faol' : ''].filter(Boolean).join(' · ');
+    const kindName = { mat: 'Xom ashyo', pill: 'Dorilar', weapon: 'Qurollar', armor: 'Zirhlar', charm: 'Tumorlar', manual: 'Risolalar' };
+    const groups = ['pill', 'manual', 'weapon', 'armor', 'charm', 'mat'].map((k) => { const list = I.items.filter((x) => x.kind === k); if (!list.length) return '';
+      return `<h4 style="margin:12px 0 6px">${kindName[k]}</h4>` + list.map((x) => `<div class="item" style="display:flex;gap:10px;align-items:center"><div style="font-size:22px">${x.icon}</div><div style="flex:1"><b>${esc(x.name)}</b> ×${x.n}<small>${esc(x.desc)}${x.stats ? ' · ' + statsText(x.stats) : ''}</small></div>
+        ${x.kind === 'pill' || x.id === 'herb' ? b('Ishlatish', `invAct({t:'use',id:'${x.id}'})`) : x.kind === 'manual' ? b("O'qish", `invAct({t:'use',id:'${x.id}'})`) : ''}${['weapon', 'armor', 'charm'].includes(x.kind) ? b('Kiyish', `invAct({t:'equip',id:'${x.id}'})`) : ''}
+        ${I.market ? b(`Sotish ${I.market.sell?.[x.id] ?? Math.round(x.sell * I.market.sellMult)}🪙`, `invAct({t:'sellitem',id:'${x.id}'})`) : ''}</div>`).join(''); }).join('');
+    body = `<div style="display:flex;gap:8px;flex-wrap:wrap">${eq}</div><div style="color:var(--dim);margin:4px 0">Jihoz bonusi: ${bon || "yo'q"}${buffs ? ' · ' + buffs : ''}</div>${groups || '<div class="item">Inventar bo\'sh. Tadqiq qiling (Z) va yirtqichlarni yenging.</div>'}${I.market ? '' : '<div style="color:var(--dim);margin-top:8px">Sotish uchun qishloq yoki shaharga boring.</div>'}`;
+  } else if (invTab === 'craft') {
+    const card = (r) => `<div class="item" style="display:flex;gap:10px;align-items:center;${r.can ? 'border-left-color:#4aa07c' : ''}"><div style="font-size:22px">${r.icon}</div><div style="flex:1"><b>${esc(r.outName)}</b>${r.minRealm ? ` <span style="color:var(--dim)">(${r.minRealm}-bosqich)</span>` : ''}<small>${esc(r.desc)}${r.stats ? ' · ' + statsText(r.stats) : ''}</small>
+      <small>${r.needsNamed.map((n) => `<span style="color:${n.have >= n.n ? '#8ee0b0' : '#ff948e'}">${esc(n.name)} ${n.have}/${n.n}</span>`).join(' · ')}${r.silver ? ` · <span style="color:${S.player.silver >= r.silver ? '#8ee0b0' : '#ff948e'}">${r.silver} kumush</span>` : ''} · ${r.hours} soat</small></div>${b('Yasash', `invAct({t:'craft',id:'${r.id}'})`, r.can)}</div>`;
+    body = `<h4 style="margin:4px 0 6px">⚗ Alkimyo — istalgan joyda, muvaffaqiyat ${Math.round(I.alchemyChance * 100)}% (6 energy, 10 focus)</h4>${I.recipes.filter((r) => r.station === 'alchemy').map(card).join('')}
+      <h4 style="margin:14px 0 6px">🔨 Temirchilik — <span style="color:${I.smith.ok ? '#8ee0b0' : '#ff948e'};font-weight:400">${esc(I.smith.why)}</span></h4>${I.recipes.filter((r) => r.station === 'forge').map(card).join('')}`;
+  } else {
+    body = I.market ? `<div style="color:var(--dim);margin-bottom:8px">${I.market.kind === 'city' ? 'Shahar bozori: narxlar yaxshiroq (sotish ×1.3).' : 'Qishloq bozori.'} Sotish — «Buyumlar» bo'limida.</div>` + I.market.buy.map((x) => `<div class="item" style="display:flex;gap:10px;align-items:center"><div style="font-size:22px">${x.icon}</div><div style="flex:1"><b>${esc(x.name)}</b><small>${esc(x.desc)}</small></div>${x.m && x.m !== 1 ? `<small style="color:${x.m > 1 ? '#ffb4ae' : '#8ee0b0'}">×${x.m}</small>` : ''}${b(`Olish ${x.buy}🪙`, `invAct({t:'buy',id:'${x.id}'})`, S.player.silver >= x.buy)}</div>`).join('')
+      : "<div class='item'>Bu yerda bozor yo'q. Majnuntol qishlog'i yoki Daryo shahriga boring.</div>";
+  }
+  $('#m-body').innerHTML = `<div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">${tabs}<span style="margin-left:auto;color:var(--gold)">🪙 ${S.player.silver}</span></div>` + body;
+}
+async function invAct(params) { await api(params); if (invOpen) openInv(); }
+// ---- Dunyo xaritasi: tumanli relyef, zoom/pan, joy tafsilotlari ----
+let wmCanvas = null, wmDirty = true, wmSeen = new Set(), mapOpen = false;
+const WM = { s: 0, cx: 0, cy: 0, sel: null, drag: null, fit: 1 };
+const MINI_RGB = [[188, 199, 154], [79, 128, 119], [139, 151, 157], [127, 176, 198], [205, 185, 142], [214, 164, 58]];
+const POI_SERV = { town: 'bozor · temirxona · taverna · mehmonxona · kutubxona · teleport', village: 'bozor · taverna · mehmonxona', sect: 'zal · kutubxona · teleport', hideout: 'qora bozor · taverna',
+  cave: "qo'riqchi · xazina", ruin: "ruh boss · xazina", sect_ruin: "adashgan shogirdlar · xazina", shrine: 'mashq ×1.5' };
+const famous = (p) => p.kind === 'town' || p.kind === 'sect';
+function buildWorldImage() {
+  if (!wmCanvas) { wmCanvas = document.createElement('canvas'); wmCanvas.width = G.cols; wmCanvas.height = G.rows; }
+  const c = wmCanvas.getContext('2d'), img = c.createImageData(G.cols, G.rows), d = img.data; wmSeen = new Set();
+  for (let i = 0; i < G.t.length; i++) {
+    const o = i * 4, base = MINI_RGB[G.t[i]], fog = !EXP[i], k = fog ? 0.66 : 0, j = (() => { let x = Math.imul(i ^ 0x9e3779b9, 0x85ebca6b); x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35); x ^= x >>> 16; return ((x >>> 27) - 16) * 0.5; })();
+    d[o] = base[0] * (1 - k) + 38 * k + j; d[o + 1] = base[1] * (1 - k) + 44 * k + j; d[o + 2] = base[2] * (1 - k) + 42 * k + j; d[o + 3] = 255;
+    if (!fog) wmSeen.add(G.region[i]);
+  }
+  c.putImageData(img, 0, 0); wmDirty = false;
+}
+function openWorldMap() {
+  if (!S) return; if (wmDirty || !wmCanvas) buildWorldImage();
+  mapOpen = true; const box = $('#modal .box'); box.style.width = 'min(1260px, 97vw)';
+  $('#modal').style.display = 'grid'; $('#m-title').textContent = "🗺 Dunyo xaritasi — kashf etilgan: " + (100 * EXP.reduce((a, b) => a + b, 0) / EXP.length).toFixed(1) + '%';
+  const bw = Math.min(1260, innerWidth * 0.97) - 330, ch = Math.round(Math.min(innerHeight * 0.8 - 90, bw * 0.72));
+  $('#m-body').innerHTML = `<div style="display:flex;gap:10px;align-items:flex-start">
+    <canvas id="wm" width="${Math.round(bw)}" height="${ch}" style="display:block;border-radius:8px;cursor:grab;background:#1b2120;flex:none"></canvas>
+    <div id="wminfo" style="width:270px;flex:none;max-height:${ch}px;overflow-y:auto"></div></div>
+    <div style="color:var(--dim);margin-top:6px;font-size:12px">G'ildirak/± — yaqinlashtirish · sudrash — siljitish · joyni bosing — tafsilot. Tumanli joylar — hali kashf etilmagan (shakli mish-mishlardan ma'lum). ? — mashhur, lekin ko'rilmagan joy.</div>`;
+  const cv = $('#wm');
+  WM.fit = Math.min(cv.width / G.cols, cv.height / G.rows);
+  if (!WM.s) { WM.s = Math.max(WM.fit, 3); WM.cx = S.player.tx + 0.5; WM.cy = S.player.ty + 0.5; }
+  WM.s = Math.max(WM.s, WM.fit);
+  const toTile = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left - cv.width / 2) / WM.s + WM.cx, (e.clientY - r.top - cv.height / 2) / WM.s + WM.cy]; };
+  cv.onwheel = (e) => { e.preventDefault(); const [tx, ty] = toTile(e); const ns = clamp(WM.s * Math.exp(-e.deltaY * 0.0015), WM.fit, 28); const r = cv.getBoundingClientRect();
+    WM.cx = tx - (e.clientX - r.left - cv.width / 2) / ns; WM.cy = ty - (e.clientY - r.top - cv.height / 2) / ns; WM.s = ns; drawWM(); };
+  cv.onmousedown = (e) => { WM.drag = { x: e.clientX, y: e.clientY, cx: WM.cx, cy: WM.cy, moved: false }; cv.style.cursor = 'grabbing'; };
+  cv.onmousemove = (e) => {
+    if (WM.drag) { const dx = e.clientX - WM.drag.x, dy = e.clientY - WM.drag.y; if (Math.abs(dx) + Math.abs(dy) > 3) WM.drag.moved = true; WM.cx = WM.drag.cx - dx / WM.s; WM.cy = WM.drag.cy - dy / WM.s; drawWM(); return; }
+    const hit = wmHit(...toTile(e)), tip = $('#tip');
+    if (hit) { tip.innerHTML = `<b>${esc(hit.known ? hit.p.name : hit.p.name + ' ?')}</b><br>${POI_NAME[hit.p.kind]} · xavf ${hit.p.tier}`; tip.style.display = 'block'; tip.style.left = Math.min(e.clientX + 14, innerWidth - 240) + 'px'; tip.style.top = e.clientY + 14 + 'px'; }
+    else tip.style.display = 'none';
+  };
+  cv.onmouseup = (e) => { const d = WM.drag; WM.drag = null; cv.style.cursor = 'grab'; if (d && !d.moved) { const [tx, ty] = toTile(e); const hit = wmHit(tx, ty); WM.sel = hit ? { poi: hit.p, k: hit.k } : { tile: [Math.floor(tx), Math.floor(ty)] }; drawWM(); renderWMInfo(); } };
+  cv.onmouseleave = () => { WM.drag = null; $('#tip').style.display = 'none'; };
+  drawWM(); renderWMInfo();
+}
+function wmZoom(f) { WM.s = clamp(WM.s * f, WM.fit, 28); drawWM(); }
+function poiKnown(p) { return !!EXP[p.ty * G.cols + p.tx]; }
+function wmHit(tx, ty) {
+  let best = null, bd = Math.max(1.2, 9 / WM.s);
+  for (let k = 0; k < G.pois.length; k++) { const p = G.pois[k], known = poiKnown(p); if (!known && !famous(p)) continue; const d = Math.hypot(p.tx + 0.5 - tx, p.ty + 0.5 - ty); if (d < bd) { bd = d; best = { p, k, known }; } }
+  return best;
+}
+function drawWM() {
+  const cv = $('#wm'); if (!cv) return; const c = cv.getContext('2d'), s = WM.s, W2 = cv.width, H2 = cv.height;
+  const X = (tx) => (tx - WM.cx) * s + W2 / 2, Y = (ty) => (ty - WM.cy) * s + H2 / 2;
+  c.fillStyle = '#1b2120'; c.fillRect(0, 0, W2, H2);
+  c.imageSmoothingEnabled = s < 2.5; c.drawImage(wmCanvas, X(0), Y(0), G.cols * s, G.rows * s);
+  if (s >= 12) { c.strokeStyle = 'rgba(0,0,0,.12)'; c.lineWidth = 1; c.beginPath(); const c0 = Math.max(0, Math.floor(WM.cx - W2 / 2 / s)), c1 = Math.min(G.cols, Math.ceil(WM.cx + W2 / 2 / s)), r0 = Math.max(0, Math.floor(WM.cy - H2 / 2 / s)), r1 = Math.min(G.rows, Math.ceil(WM.cy + H2 / 2 / s));
+    for (let x = c0; x <= c1; x++) { c.moveTo(X(x), Y(r0)); c.lineTo(X(x), Y(r1)); } for (let y = r0; y <= r1; y++) { c.moveTo(X(c0), Y(y)); c.lineTo(X(c1), Y(y)); } c.stroke(); }
+  c.strokeStyle = 'rgba(227,179,65,.7)'; c.setLineDash([5, 4]); c.lineWidth = 1.5; c.strokeRect(X(G.core.x), Y(G.core.y), G.core.w * s, G.core.h * s); c.setLineDash([]);
+  c.textAlign = 'center'; c.lineJoin = 'round';
+  // hududlar: doim ko'rinadi (ko'rilmagani xira)
+  for (const r of G.regions) { const seen = wmSeen.has(r.id), fs = clamp(11 + s * 0.6, 11, 17);
+    c.font = `700 ${fs}px "Segoe UI", sans-serif`; c.lineWidth = 4; c.strokeStyle = 'rgba(0,0,0,.7)'; const t = r.name + (r.tier ? ' · ' + r.tier : '');
+    c.globalAlpha = seen ? 1 : 0.55; c.strokeText(t, X(r.cx), Y(r.cy)); c.fillStyle = r.tier >= 6 ? '#ff9a8f' : r.tier >= 3 ? '#ffd479' : '#d8f0e0'; c.fillText(t, X(r.cx), Y(r.cy)); c.globalAlpha = 1; }
+  // joylar
+  for (let k = 0; k < G.pois.length; k++) {
+    const p = G.pois[k], known = poiKnown(p); if (!known && !famous(p)) continue;
+    const x = X(p.tx + 0.5), y = Y(p.ty + 0.5); if (x < -20 || y < -20 || x > W2 + 20 || y > H2 + 20) continue;
+    const rr = clamp(s * 0.45, 3, 9), done = S.cleared.includes(k);
+    c.globalAlpha = known ? 1 : 0.6;
+    c.fillStyle = p.kind === 'sect' ? (p.evil ? '#ff4d6a' : '#5fb0ff') : p.kind === 'town' ? '#e3b341' : p.kind === 'village' ? '#f2efe3' : p.kind === 'shrine' ? '#8fe0ff' : p.kind === 'hideout' ? '#e5484d' : '#b9a3ff';
+    c.beginPath(); c.arc(x, y, (p.kind === 'town' || p.kind === 'sect') ? rr * 1.3 : rr, 0, 7); c.fill(); c.strokeStyle = '#111'; c.lineWidth = 1; c.stroke();
+    if (!known) { c.fillStyle = '#111'; c.font = `700 ${rr * 1.6}px sans-serif`; c.fillText('?', x, y + rr * 0.55); }
+    if (p.guardian && known) { c.font = `${clamp(s, 9, 13)}px sans-serif`; c.fillStyle = done ? '#8ee0b0' : '#ff8a80'; c.fillText(done ? '✔' : '⚔', x + rr + 5, y - rr); }
+    if (famous(p) || s >= 5) { c.font = `600 ${clamp(9 + s * 0.4, 10, 14)}px "Segoe UI", sans-serif`; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(p.name, x, y - rr - 5); c.fillStyle = p.evil ? '#ff9a8f' : '#fff3cf'; c.fillText(p.name, x, y - rr - 5); }
+    c.globalAlpha = 1;
+  }
+  for (const p of MAP.places) if (EXP[p.ty * G.cols + p.tx]) { const x = X(p.tx + 0.5), y = Y(p.ty + 0.5); c.fillStyle = '#3f87c9'; c.fillRect(x - 4, y - 4, 8, 8); if (s >= 5) { c.font = '600 12px "Segoe UI", sans-serif'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(p.name, x, y - 8); c.fillStyle = '#d8ecff'; c.fillText(p.name, x, y - 8); } }
+  for (const m of S.faction.markers) if (m.kind === 'place') { const t = markerTile(m.id); if (t) { c.fillStyle = '#e3b341'; c.font = '700 14px sans-serif'; c.fillText('!', X(t[0] + 0.5), Y(t[1] + 0.5) - 10); } }
+  if (WM.sel) { const [tx, ty] = WM.sel.poi ? [WM.sel.poi.tx, WM.sel.poi.ty] : WM.sel.tile; c.strokeStyle = '#fff'; c.lineWidth = 2; c.strokeRect(X(tx) - 3, Y(ty) - 3, Math.max(6, s) + 6, Math.max(6, s) + 6); }
+  const px = X(S.player.tx + 0.5), py = Y(S.player.ty + 0.5);
+  c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.arc(px, py, 8, 0, 7); c.stroke(); c.fillStyle = '#e5484d'; c.beginPath(); c.arc(px, py, 4.5, 0, 7); c.fill();
+  c.font = '600 11px "Segoe UI", sans-serif'; c.fillStyle = '#fff'; c.fillText('Siz', px, py + 20);
+}
+function renderWMInfo() {
+  const box = $('#wminfo'); if (!box) return; const sel = WM.sel;
+  const btn = (label, js, on = true) => `<button class="btn" style="padding:4px 10px;margin:4px 4px 0 0;${on ? '' : 'opacity:.4;cursor:default'}" ${on ? `onclick="${js}"` : 'disabled'}>${label}</button>`;
+  const me = S.player, regHere = G.regions[G.region[me.ty * G.cols + me.tx]];
+  let html = `<div class="item"><b>Siz</b><small>${esc(regHere.name)}${regHere.tier ? ' · xavf ' + regHere.tier : ''} · N${me.ty} E${me.tx}</small>${btn('Menga qaytish', 'WM.cx=S.player.tx+.5;WM.cy=S.player.ty+.5;WM.s=Math.max(WM.s,6);drawWM()')}</div>`;
+  if (!sel) html += `<div class="item"><small>Xaritadagi joyni bosing — turi, hududi, xavfi, xizmatlari va borish yo'li shu yerda chiqadi.</small></div>`;
+  else if (sel.poi) {
+    const p = sel.poi, known = poiKnown(p), reg = G.regions[p.region], dist = Math.round(Math.hypot(p.tx - me.tx, p.ty - me.ty)), done = S.cleared.includes(sel.k);
+    const danger = reg.tier > me.realm + 1 ? `<div style="color:#ff8a80">⚠ Siz uchun xavfli (siz ${me.realm}-bosqich)</div>` : '';
+    const tp = S.place?.teleport?.find((x) => x.id === p.id);
+    html += `<div class="item" style="border-left-color:var(--gold)"><b>${esc(p.name)}${known ? '' : ' (ko\'rilmagan)'}</b><small>${POI_NAME[p.kind]}${p.evil ? ' · iblis' : ''} · ${esc(reg.name)} · xavf ${p.tier} · ${dist} katak</small>
+      <div style="margin-top:4px">${esc(POI_SERV[p.kind] ?? '')}</div>${p.guardian ? `<div style="color:${done ? '#8ee0b0' : '#ffb4ae'}">${done ? "Tozalangan" : "Qo'riqchi bor"}</div>` : ''}${danger}
+      ${tp ? (tp.known ? btn(`🌀 Teleport — ${tp.cost}🪙`, `closeModal();api({t:'tp',id:'${p.id}'})`, me.silver >= tp.cost) : '') : (p.kind === 'town' || p.kind === 'sect') ? "<div style='color:var(--dim);margin-top:4px'>Teleport: shahar yoki sekta darvozasidan (E)</div>" : ''}
+      ${btn("Yo'l chizish", `wmGo(${p.tx},${p.ty})`, dist <= 70)}${dist > 70 ? "<div style='color:var(--dim)'>Juda uzoq: teleport yoki bosqichma-bosqich yuring.</div>" : ''}</div>`;
+  } else {
+    const [tx, ty] = sel.tile; if (tx >= 0 && ty >= 0 && tx < G.cols && ty < G.rows) {
+      const i = ty * G.cols + tx, reg = G.regions[G.region[i]], names = ['Dala', "O'rmon", "Tog'", 'Suv', "Yo'l", 'Manzil'];
+      html += `<div class="item"><b>${EXP[i] ? names[G.t[i]] : "Noma'lum hudud"}</b><small>${esc(reg.name)}${reg.tier ? ' · xavf ' + reg.tier : ''} · N${ty} E${tx} · ${Math.round(Math.hypot(tx - me.tx, ty - me.ty))} katak</small>${EXP[i] && G.t[i] !== 3 ? btn("Yo'l chizish", `wmGo(${tx},${ty})`, Math.hypot(tx - me.tx, ty - me.ty) <= 70) : ''}</div>`;
+    }
+  }
+  const known = G.pois.filter(poiKnown), byKind = {}; for (const p of known) byKind[p.kind] = (byKind[p.kind] ?? 0) + 1;
+  html += `<div class="item"><b>Kashf etilgan joylar: ${known.length}/${G.pois.length}</b><small>${Object.entries(byKind).map(([k, n]) => `${POI_NAME[k]}: ${n}`).join(' · ') || "hali yo'q — taverna mish-mishlari yordam beradi"}</small></div>`;
+  box.innerHTML = html;
+}
+function wmGo(tx, ty) { const p = findPath(S.player.tx, S.player.ty, tx, ty); if (!p) { toast("U yerga yo'l topilmadi"); return; } closeModal(); walk(p); }
+function closeModal() { if (mapOpen) { mapOpen = false; $('#modal .box').style.width = ''; $('#tip').style.display = 'none'; } placeOpen = false; invOpen = false; hallOpen = false; skillsOpen = false; $('#modal').style.display = 'none'; }
+async function openIntel() {
+  const d = await (await fetch('/api/game/intel')).json(); $('#m-title').textContent = 'Razvedka: kashf etilgan hududlardagi voqealar'; $('#modal').style.display = 'grid';
+  $('#m-body').innerHTML = d.events.map((e) => `<div class="item"><small>${e.day}-kun</small>${esc(e.text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</div>`).join('') || '<div class="item">Hozircha hech narsa ma\'lum emas. Hududlarni kashf eting.</div>';
+}
+const QICON = { caravan: '🐫', theft: '🕵', liberate: '⚑', relief: '🍚', murder: '🗡', healer: '💊' };
+function questHtml(q, here) {
+  const st = q.status === 'done' ? (q.solver === 'player' ? '<span style="color:#8ee0b0">✔ siz bajardingiz</span>' : '<span style="color:var(--dim)">✔ hal bo\'ldi (sizsiz)</span>')
+    : q.status === 'failed' ? '<span style="color:#ffb4ae">✖ bajarilmadi</span>' : `${q.daysLeft} kun qoldi`;
+  const take = q.status === 'open' && !q.taken ? ` <button class="btn" style="padding:2px 8px" onclick="api({t:'takeq',id:'${q.id}'}).then(()=>{ if (typeof placeOpen !== 'undefined' && placeOpen) openPlace(); else openLetters(); })">Qabul qilish</button>` : '';
+  const donate = here && q.kind === 'relief' && q.status === 'open' ? ` <button class="btn" style="padding:2px 8px" onclick="placeAct({t:'donate'})">Don olib berish — 60🪙</button>` : '';
+  return `<div class="item ${q.taken && q.status === 'open' ? 'open' : ''}"><small>${QICON[q.kind] ?? '•'} ${esc(q.placeName)} · ${esc(q.giverName)} · ${st}${q.reward ? ` · mukofot ${q.reward}🪙` : ''}</small><b>${esc(q.title)}</b> — ${esc(q.desc)}${take}${donate}
+    ${q.clues && q.clues.length ? `<div style="margin-top:4px;color:#c9b98e">${q.clues.slice(-4).map((c) => '🔎 ' + esc(c)).join('<br>')}</div>` : ''}</div>`;
+}
+async function openLetters() {
+  const d = await (await fetch('/api/game/intel')).json(); $('#m-title').textContent = 'Vazifalar va maktublar'; $('#modal').style.display = 'grid';
+  const qs = S.quests && S.quests.length ? '<h4 style="margin:4px 0 8px">Iltimoslar <small style="color:var(--dim);font-weight:400">— dunyo voqealaridan tug\'iladi; siz yordam bermasangiz, oqibati bo\'ladi</small></h4>' + S.quests.map((q) => questHtml(q, false)).join('') : '';
+  const tasks = qs + (S.faction.tasks.length ? '<h4 style="margin:14px 0 8px">Fraksiya vazifalari</h4>' + S.faction.tasks.map(taskHtml).join('') : '') + (qs || S.faction.tasks.length ? '<h4 style="margin:14px 0 8px">Dunyo hikoyalari</h4>' : '');
+  $('#m-body').innerHTML = tasks + d.letters.map((l) => `<div class="item ${l.status === 'open' ? 'open' : ''}"><small>${l.day}-kun · ${esc(l.channel ?? '')} · ${l.status === 'open' ? 'davom etmoqda' : 'yakunlandi'}</small><b>${esc(l.type)}</b> — ${esc(l.who)}${l.outcome ? '<br>' + esc(l.outcome) : ''}</div>`).join('') || '<div class="item">Hali xat yo\'q. Dunyo o\'z hikoyalarini yozmoqda…</div>';
+}
+addEventListener('keydown', (e) => {
+  if (!S || e.ctrlKey || e.metaKey || (typeof Combat !== 'undefined' && Combat.active)) return; const k = e.key.toLowerCase();
+  if ($('#modal').style.display === 'grid') { if (k === 'escape' || k === 'l' || k === 'r' || k === 'k' || k === 'g' || k === 'i' || k === 'm' || k === 'e') closeModal(); else if (mapOpen && (k === '+' || k === '=' || k === '-')) wmZoom(k === '-' ? 1 / 1.4 : 1.4); return; }
+  const mv = { arrowup: [0, -1], w: [0, -1], arrowdown: [0, 1], s: [0, 1], arrowleft: [-1, 0], a: [-1, 0], arrowright: [1, 0], d: [1, 0] }[k];
+  if (mv) { e.preventDefault(); walkId++; path = []; api({ t: 'move', dx: mv[0], dy: mv[1] }); return; }
+  if (k === 'z') doAct('explore'); else if (k === 'c') doAct('cultivate'); else if (k === 't') doAct('rest'); else if (k === 'h') doAct('herb'); else if (k === 'u') doAct('sell');
+  else if (k === 'o') cycleSound(); else if (k === 'n') toggleNear(); else if (k === 'e') openPlace(); else if (k === 'm') openWorldMap(); else if (k === 'i') openInv(); else if (k === 'k') openSkills(); else if (k === 'g') openHall(); else if (k === 'l') openIntel(); else if (k === 'r') openLetters(); else if (k === 'escape') { walkId++; path = []; } else if (k === '+' || k === '=') TS = clamp(TS * 1.15, 40, 130); else if (k === '-') TS = clamp(TS / 1.15, 40, 130);
+});
+
+// ====================== Ishga tushirish ======================
+let prev = performance.now();
+function frame(now) { const dt = Math.min(0.1, (now - prev) / 1000); prev = now; if (innerWidth !== W || innerHeight !== H) resize(); draw(now, dt); requestAnimationFrame(frame); }
+(async () => {
+  resize(); build(); drawPortrait();
+  MAP = await (await fetch('/api/game/map')).json();
+  G = { cols: MAP.cols, rows: MAP.rows, core: MAP.core, t: decodeBytes(MAP.terrain), region: decodeBytes(MAP.region), loc: new Array(MAP.cols * MAP.rows).fill(null), pois: MAP.pois, regions: MAP.regions };
+  for (const [i, id] of MAP.locs) G.loc[i] = id;
+  applyState(await (await fetch('/api/game/state?full=1')).json());
+  $('#loading').style.display = 'none'; requestAnimationFrame(frame);
+  // Bitta dunyo: kuzatuvchida vaqt o'tsa, bu yerda ham ko'rinadi
+  setInterval(async () => {
+    if (busy || pending || walkId && path.length || (typeof Combat !== 'undefined' && Combat.active) || document.hidden) return;
+    try { const st = await (await fetch('/api/game/state')).json(); if (S && st.seed !== S.seed) { location.reload(); return; } if (!busy && !pending && st.h !== S.h) applyState(st); } catch (e) { /* server band */ }
+  }, 2000);
+})();
+</script>
+<script src="/combat.js"></script>
+</body>
+</html>

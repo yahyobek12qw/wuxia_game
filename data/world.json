@@ -1,0 +1,18 @@
+{
+  "locations": [
+    { "id": "qingyun_peak", "name": "Qingyun cho'qqisi", "kind": "sect", "qi": 2, "owner": "qingyun", "x": 560, "y": 520 },
+    { "id": "mountain_path", "name": "Tog' so'qmoqi", "kind": "road", "qi": 1.2 },
+    { "id": "willow_village", "name": "Majnuntol qishlog'i", "kind": "village", "qi": 1, "owner": "qingyun", "x": 1420, "y": 1080 },
+    { "id": "river_road", "name": "Daryo yo'li", "kind": "road", "qi": 1, "owner": "imperial" },
+    { "id": "river_city", "name": "Daryo shahri", "kind": "city", "qi": 0.9, "owner": "imperial", "x": 2700, "y": 1180 },
+    { "id": "black_forest", "name": "Qora o'rmon", "kind": "road", "qi": 1.1 },
+    { "id": "black_wind_camp", "name": "Qora Shamol qarorgohi", "kind": "camp", "qi": 1, "owner": "black_wind", "x": 1500, "y": 1800 },
+    { "id": "hidden_cave", "name": "Yashirin g'or", "kind": "cave", "qi": 3, "x": 480, "y": 1850 }
+  ],
+  "paths": [
+    { "a": "qingyun_peak", "b": "willow_village", "road": "mountain_path", "hours": 3, "pts": [[700,640],[800,780],[1050,830],[1250,1000]] },
+    { "a": "willow_village", "b": "river_city", "road": "river_road", "hours": 4, "pts": [[1700,1000],[2000,1120],[2350,1060],[2550,1160]] },
+    { "a": "willow_village", "b": "black_wind_camp", "road": "black_forest", "hours": 3, "pts": [[1380,1300],[1500,1480],[1420,1650]] },
+    { "a": "black_wind_camp", "b": "hidden_cave", "road": "black_forest", "hours": 3, "pts": [[1250,1830],[950,1760],[700,1900]] }
+  ]
+}

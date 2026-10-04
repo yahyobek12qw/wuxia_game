@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WUXIA — Jonli dunyo</title>
+<style>
+  :root {
+    --bg: #14110f; --panel: rgba(24, 20, 17, .92); --line: #3a322b; --ink: #ece4d3; --dim: #a39a88; --accent: #e3b341;
+    --war: #e5484d; --story: #4f9dff; --death: #b0a8ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 13px/1.4 "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  canvas#map { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  canvas#map.drag { cursor: grabbing; }
+  button, input { font: inherit; color: inherit; }
+  button { background: #2a231d; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+  button:hover { background: #38302a; }
+  button.on { background: var(--accent); color: #1a1409; border-color: var(--accent); font-weight: 600; }
+
+  #top { position: fixed; top: 12px; left: 12px; right: 372px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; pointer-events: none; }
+  #top > * { pointer-events: auto; }
+  .chip { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; backdrop-filter: blur(6px); }
+  #title { font-weight: 700; letter-spacing: .08em; }
+  #title b { color: var(--accent); font-size: 16px; margin-right: 6px; }
+  #clock { font-variant-numeric: tabular-nums; min-width: 150px; }
+  #clock .big { font-size: 15px; font-weight: 600; }
+  .speed { display: flex; gap: 4px; align-items: center; }
+  .speed small { color: var(--dim); margin-right: 4px; }
+  .seed { display: flex; gap: 4px; align-items: center; }
+  .seed input { width: 64px; background: #1d1814; border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; }
+
+  #side { position: fixed; top: 0; right: 0; bottom: 0; width: 360px; background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; backdrop-filter: blur(6px); }
+  #tabs { display: flex; border-bottom: 1px solid var(--line); }
+  #tabs button { flex: 1; border: 0; border-radius: 0; background: transparent; padding: 11px 6px; color: var(--dim); border-bottom: 2px solid transparent; }
+  #tabs button.on { background: transparent; color: var(--accent); border-bottom-color: var(--accent); }
+  .pane { flex: 1; overflow-y: auto; padding: 10px 12px 16px; display: none; }
+  .pane.on { display: block; }
+  .pane::-webkit-scrollbar { width: 8px; } .pane::-webkit-scrollbar-thumb { background: #3a322b; border-radius: 4px; }
+
+  .ev { padding: 6px 8px; margin: 0 0 5px; border-left: 3px solid var(--line); background: rgba(255, 255, 255, .03); border-radius: 0 6px 6px 0; cursor: pointer; }
+  .ev:hover { background: rgba(255, 255, 255, .07); }
+  .ev small { color: var(--dim); display: block; }
+  .ev.war { border-left-color: var(--war); } .ev.story { border-left-color: var(--story); } .ev.death { border-left-color: var(--death); }
+  .filters { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .filters button { padding: 3px 9px; font-size: 12px; }
+
+  .fac { border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; margin-bottom: 9px; background: rgba(255, 255, 255, .03); }
+  .fac.off { opacity: .45; }
+  .fac h4 { margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; border: 1px solid #0006; }
+  .kv { color: var(--dim); } .kv b { color: var(--ink); font-weight: 600; }
+  .tens { margin-top: 6px; display: grid; grid-template-columns: 1fr 90px 26px; gap: 3px 8px; align-items: center; font-size: 12px; }
+  .bar { height: 6px; background: #2a241e; border-radius: 3px; overflow: hidden; } .bar i { display: block; height: 100%; }
+
+  .story { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; background: rgba(255, 255, 255, .03); }
+  .story .t { font-weight: 600; } .story .m { color: var(--dim); font-size: 12px; }
+  .tag { font-size: 11px; padding: 1px 7px; border-radius: 9px; background: #2f2820; color: var(--dim); margin-left: 6px; }
+  .tag.open { background: #3a2f12; color: var(--accent); }
+
+  #card { position: fixed; left: 12px; bottom: 12px; width: 330px; max-height: calc(100% - 90px); overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: none; backdrop-filter: blur(6px); }
+  #card h3 { margin: 0; display: flex; align-items: center; gap: 8px; }
+  #card .x { margin-left: auto; padding: 0 8px; }
+  #card .sub { color: var(--dim); margin: 2px 0 8px; }
+  #card h5 { margin: 10px 0 4px; color: var(--accent); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; font-size: 11px; }
+  .meters { display: grid; grid-template-columns: 62px 1fr 28px; gap: 3px 8px; align-items: center; font-size: 12px; }
+  .row { font-size: 12px; color: var(--dim); } .row b { color: var(--ink); font-weight: 500; }
+
+  #tip { position: fixed; pointer-events: none; background: rgba(10, 8, 6, .92); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font-size: 12px; display: none; z-index: 5; max-width: 240px; }
+  #mini { position: fixed; right: 372px; bottom: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; }
+  #legend { position: fixed; right: 380px; top: 62px; font-size: 12px; display: none; }
+  #sidetoggle { position: fixed; top: 50%; right: 360px; transform: translateY(-50%); z-index: 6; width: 22px; height: 64px; padding: 0; border-radius: 8px 0 0 8px; border-right: 0; background: var(--panel); color: var(--accent); font-size: 14px; }
+  body.side-hidden #side { display: none; }
+  body.side-hidden #sidetoggle { right: 0; width: auto; height: auto; padding: 8px 10px; border-radius: 8px 0 0 8px; }
+  body.side-hidden #top { right: 12px; }
+  body.side-hidden #mini { right: 12px; }
+  #help { position: fixed; left: 12px; top: 58px; color: var(--dim); font-size: 12px; pointer-events: none; text-shadow: 0 1px 2px #000; }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); z-index: 20; font-size: 16px; color: var(--dim); }
+  @media (max-width: 820px) {
+    #side { width: 100%; top: auto; height: 38%; border-left: 0; border-top: 1px solid var(--line); }
+    #top { right: 12px; } #mini, #help { display: none; } #card { bottom: calc(38% + 12px); width: calc(100% - 24px); max-height: 40%; }
+  }
+</style>
+</head>
+<body>
+<div id="loading">Dunyo yaratilmoqda…</div>
+<canvas id="map"></canvas>
+
+<div id="top">
+  <div class="chip" id="title"><b>武</b>WUXIA · Jonli dunyo</div>
+  <a class="chip" href="/play" style="color:var(--accent);text-decoration:none;font-weight:600">▶ O'ynash</a>
+  <div class="chip" id="clock"><span class="big" id="clk">—</span><br><span class="kv" id="cnt"></span></div>
+  <div class="chip speed" id="speed"><small>soat/s</small></div>
+  <button class="chip" id="fogbtn" title="Tuman: faqat siz kashf etgan joylar / butun dunyo (V)" style="cursor:pointer;color:inherit">🌫 Tuman</button>
+  <div class="chip seed"><span class="kv">seed</span><input id="seed" type="number" min="1" value="2"><button id="reset">Qayta boshlash</button></div>
+</div>
+<div id="help">Butun dunyo: 500×350 katak, ~550 NPC · g'ildirak — masshtab · sudrash — siljitish · minixaritani bosing — uchish · NPC — tafsilot · Probel — pauza · F — kuzatish · P — panel · V — tuman/hammasi</div>
+
+<button id="sidetoggle" title="Panelni yashirish / ko'rsatish (P)">⟩</button>
+<aside id="side">
+  <div id="tabs">
+    <button data-tab="events" class="on">Voqealar</button>
+    <button data-tab="factions">Fraksiyalar</button>
+    <button data-tab="stories">Hikoyalar</button>
+  </div>
+  <div class="pane on" id="p-events">
+    <div class="filters" id="filters">
+      <button data-k="all" class="on">Hammasi</button><button data-k="war">Jang</button><button data-k="death">O'lim</button><button data-k="story">Siyosat</button>
+    </div>
+    <div id="evlist"></div>
+  </div>
+  <div class="pane" id="p-factions"></div>
+  <div class="pane" id="p-stories"></div>
+</aside>
+
+<div id="card"></div>
+<canvas id="mini" width="220" height="150"></canvas>
+<div id="tip"></div>
+
+<script>
+'use strict';
+// ====================== Yordamchilar ======================
+const $ = (s) => document.querySelector(s);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const hex = (c) => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+const mix = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function hash2(ix, iy, s) { let h = Math.imul(ix, 374761393) ^ Math.imul(iy, 668265263) ^ Math.imul(s, 1442695041); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+function vnoise(x, y, s) {
+  const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+  const a = hash2(ix, iy, s), b = hash2(ix + 1, iy, s), c = hash2(ix, iy + 1, s), d = hash2(ix + 1, iy + 1, s);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function fbm(x, y, s, oct = 5) { let a = 0, amp = 0.5, f = 1, tot = 0; for (let i = 0; i < oct; i++) { a += amp * vnoise(x * f, y * f, s + i * 17); tot += amp; f *= 2; amp *= 0.5; } return a / tot; }
+function distSeg(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy; let t = l2 ? ((px - ax) * dx + (py - ay) * dy) / l2 : 0; t = clamp(t, 0, 1);
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+function distPoly(px, py, pts) { let m = 1e9; for (let i = 1; i < pts.length; i++) m = Math.min(m, distSeg(px, py, pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1])); return m; }
+
+// ====================== Holat ======================
+let MAP = null, ST = null, lastSeq = 0, selected = null, follow = false, evFilter = 'all', detailAt = 0;
+const npcs = new Map();           // id -> {x,y,tx,ty,...}
+const pulses = [];                // jang/o'lim to'lqinlari
+let events = [];                  // ko'rsatiladigan voqealar (yangi tepada)
+let dispH = 0;                    // tekis o'zgaruvchi vaqt
+let terrain = null;
+let first = true;
+
+const canvas = $('#map'), ctx = canvas.getContext('2d');
+const mini = $('#mini'), mctx = mini.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+const cam = { x: 1600, y: 1100, z: 0.5, tx: null, ty: null, tz: null, zmin: 0.2 };
+
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  if (MAP) { cam.zmin = Math.max(W / MAP.w, H / MAP.h); cam.z = Math.max(cam.z, cam.zmin); }
+}
+addEventListener('resize', resize);
+
+// ====================== Relyef ======================
+function buildWorld(map) {
+  const N = map.cols * map.rows, bin = atob(map.terrain), T = new Uint8Array(N);
+  for (let i = 0; i < N; i++) T[i] = bin.charCodeAt(i);
+  map.T = T;
+  const oc = document.createElement('canvas'); oc.width = map.cols; oc.height = map.rows;
+  const octx = oc.getContext('2d'), img = octx.createImageData(map.cols, map.rows);
+  const C = { deep: hex('#5f93ab'), shallow: hex('#a7cbd8'), dry: hex('#e6e2cc'), lush: hex('#cfd8b8'), forest: hex('#86ab9e'), rockLo: hex('#9aa4a6'), rockHi: hex('#c9cecc'),
+    snow: hex('#f4f5f1'), road: hex('#cdb88e'), place: hex('#dcc89c'), sand: hex('#e8dfc0') };   // siyoh-akvarel (o'yin palitrasi)
+  const at = (c, r) => (c < 0 || r < 0 || c >= map.cols || r >= map.rows ? 3 : T[r * map.cols + c]);
+  for (let r = 0; r < map.rows; r++) for (let c = 0; c < map.cols; c++) {
+    const i = r * map.cols + c, t = T[i], o = i * 4, n = fbm(c / 16, r / 16, 7, 3);
+    let col;
+    if (t === 3) { let k = 0; for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) if (at(c + dc, r + dr) === 3) k++; col = mix(C.shallow, C.deep, smooth(12, 25, k)); }
+    else {
+      if (t === 2) { col = mix(C.rockLo, C.rockHi, n); if (r < 70) col = mix(col, C.snow, smooth(0.45, 0.75, n + (70 - r) / 140)); }
+      else if (t === 1) col = mix(C.forest, C.lush, n * 0.45);
+      else if (t === 4) col = C.road; else if (t === 5) col = C.place;
+      else col = mix(C.dry, C.lush, n);
+      let wn = 0, mn = 0; for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nt = at(c + dc, r + dr); if (nt === 3) wn++; if (nt === 2) mn++; }
+      if (wn && t !== 2) col = mix(col, C.sand, 0.45);
+      if (t !== 2 && mn) col = mix(col, C.rockLo, 0.18 * mn);
+      const sh = 1 + (at(c - 1, r - 1) === 2 ? 0.08 : 0) - (at(c + 1, r + 1) === 2 ? 0.1 : 0);
+      col = [col[0] * sh, col[1] * sh, col[2] * sh];
+    }
+    const j = (hash2(c, r, 3) - 0.5) * 8;
+    img.data[o] = clamp(col[0] + j, 0, 255); img.data[o + 1] = clamp(col[1] + j, 0, 255); img.data[o + 2] = clamp(col[2] + j, 0, 255); img.data[o + 3] = 255;
+  }
+  octx.putImageData(img, 0, 0);
+  terrain = { canvas: oc };
+  mctx.imageSmoothingEnabled = true;
+}
+
+// ====================== Chizish: belgilar ======================
+function ell(x, y, rx, ry, fill, stroke) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 7); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); } }
+function poly(pts, fill, stroke, lw = 2) { ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.stroke(); } }
+function rect(x, y, w, h, fill, stroke) { poly([[x, y], [x + w, y], [x + w, y + h], [x, y + h]], fill, stroke, 1.5); }
+function roof(cx, y, w, h, fill = '#9a3b2e') { poly([[cx - w / 2 - 8, y + 3], [cx - w / 2 + 6, y - h], [cx + w / 2 - 6, y - h], [cx + w / 2 + 8, y + 3], [cx, y - 2]], fill, '#4d1b15', 2); }
+function tree(t) {   // siyoh uslubidagi daraxt (o'yindagi kabi)
+  const s = t.s * 15; ctx.strokeStyle = '#3a3731'; ctx.lineWidth = 2.4 * t.s; ctx.beginPath(); ctx.moveTo(t.x, t.y); ctx.lineTo(t.x, t.y - s * 0.8); ctx.stroke();
+  const blobs = [[0, -1.25, 0.55], [-0.38, -1.0, 0.42], [0.38, -1.05, 0.4], [0, -1.6, 0.36]];
+  for (const [dx, dy, r] of blobs) { ctx.globalAlpha = 0.82; ctx.fillStyle = t.k < 0.5 ? '#3f7269' : '#4a7f74'; ctx.beginPath(); ctx.arc(t.x + dx * s, t.y + dy * s, r * s, 0, 7); ctx.fill(); }
+  ctx.globalAlpha = 0.7; ctx.fillStyle = '#8bc3b5'; ctx.beginPath(); ctx.arc(t.x - 0.18 * s, t.y - 1.45 * s, 0.2 * s, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+}
+function peak(p) {
+  const s = p.s;
+  poly([[p.x - s, p.y], [p.x - s * 0.1, p.y - s * 1.25], [p.x + s * 0.15, p.y - s * 0.95], [p.x + s * 0.5, p.y - s * 1.1], [p.x + s * 1.05, p.y]], '#a9b5bb', '#33434b', 1.8);
+  poly([[p.x - s * 0.1, p.y - s * 1.25], [p.x + s * 0.15, p.y - s * 0.95], [p.x + s * 0.3, p.y - s * 0.2], [p.x - s * 0.15, p.y - s * 0.3]], '#7d8c94');
+  if (p.snow) poly([[p.x - s * 0.34, p.y - s * 0.78], [p.x - s * 0.1, p.y - s * 1.25], [p.x + s * 0.15, p.y - s * 0.95], [p.x + s * 0.02, p.y - s * 0.72], [p.x - s * 0.12, p.y - s * 0.86]], '#f3f6f8');
+}
+
+function drawSect(x, y) {
+  ctx.save(); ctx.translate(x, y);
+  ell(0, 30, 130, 42, '#6f6759'); ell(0, 24, 112, 34, '#b5ad9b'); ell(0, 22, 90, 26, '#cfc7b4');
+  for (let k = -1; k <= 1; k += 2) { rect(k * 78 - 20, -4, 40, 22, '#e6d9bb', '#6a5a42'); roof(k * 78, -4, 40, 16, '#8c3a2f'); }
+  let yy = 18;
+  for (let i = 0; i < 4; i++) { const w = 74 - i * 14, h = 20; rect(-w / 2 + 6, yy - h, w - 12, h, '#efe3c6', '#6a5a42'); rect(-4, yy - h + 4, 8, h - 4, '#6b3a24'); roof(0, yy - h, w + 6, 13, i % 2 ? '#a8432f' : '#8c3a2f'); yy -= h + 8; }
+  ctx.strokeStyle = '#d6a43a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, yy + 6); ctx.lineTo(0, yy - 22); ctx.stroke(); ell(0, yy - 24, 4, 4, '#e3b341');
+  ctx.restore();
+}
+function drawVillage(x, y, t) {
+  ctx.save(); ctx.translate(x, y);
+  for (let i = 0; i < 6; i++) { const a = i * 1.1 + 0.5, fx = Math.cos(a) * 82, fy = Math.sin(a) * 46 + 14; poly([[fx - 30, fy - 6], [fx + 10, fy - 14], [fx + 34, fy + 4], [fx - 6, fy + 12]], i % 2 ? '#c7b457' : '#7e9f43', '#00000030', 1); }
+  const hs = [[-40, 6], [-6, -20], [34, 2], [8, 24], [-34, 34], [48, 30]];
+  hs.forEach(([hx, hy], i) => { rect(hx - 15, hy - 12, 30, 20, '#d9c9a0', '#5b4a30'); poly([[hx - 20, hy - 11], [hx, hy - 30], [hx + 20, hy - 11]], i % 2 ? '#8a6b3a' : '#a07a3a', '#4b371c', 1.5); rect(hx - 4, hy - 4, 8, 12, '#4b3622'); });
+  ctx.fillStyle = 'rgba(190,190,190,' + (0.35 + 0.15 * Math.sin(t / 700)) + ')'; ell(-6, -46 - ((t / 90) % 14), 6, 4, ctx.fillStyle);
+  ctx.restore();
+}
+function drawCity(x, y, t) {
+  ctx.save(); ctx.translate(x, y);
+  ell(0, 56, 150, 30, '#00000030');
+  rect(-120, -50, 240, 100, '#cbbf9f', '#4e4533');
+  for (let i = -112; i < 112; i += 16) rect(i, -58, 9, 8, '#cbbf9f', '#4e4533');
+  [[-120, -50], [120, -50], [-120, 50], [120, 50]].forEach(([tx, ty]) => { rect(tx - 14, ty - 34, 28, 40, '#b9ad8c', '#4e4533'); roof(tx, ty - 34, 30, 14, '#3f5f8a'); });
+  rect(-110, -40, 220, 80, '#9a8f72');
+  const bs = [[-80, -8], [-28, -16], [26, -10], [78, -6], [-52, 22], [52, 24]];
+  bs.forEach(([bx, by], i) => { rect(bx - 20, by - 10, 40, 24, '#e2d6b6', '#5b4d34'); roof(bx, by - 10, 42, 15, i % 2 ? '#3f5f8a' : '#4c6e9c'); });
+  rect(-17, 28, 34, 24, '#4b3622', '#2a1d10'); poly([[-17, 28], [0, 18], [17, 28]], '#4b3622');
+  ctx.strokeStyle = '#6b5a3a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, -58); ctx.lineTo(0, -92); ctx.stroke();
+  const wv = Math.sin(t / 350) * 3; poly([[0, -92], [30 + wv, -86], [0, -78]], '#e3b341', '#7a5d12', 1.5);
+  ctx.restore();
+}
+function drawCamp(x, y, t) {
+  ctx.save(); ctx.translate(x, y);
+  ell(0, 12, 92, 52, '#5b4a34', '#2e2518');
+  for (let a = 0; a < 6.28; a += 0.22) { const px = Math.cos(a) * 88, py = Math.sin(a) * 48 + 12; poly([[px - 2.5, py], [px, py - 14], [px + 2.5, py]], '#6e4e2e', '#2e2518', 1); }
+  [[-44, -4], [38, -8], [-6, 30], [46, 24]].forEach(([tx, ty], i) => { poly([[tx - 26, ty + 14], [tx, ty - 28], [tx + 26, ty + 14]], i % 2 ? '#8a2f2a' : '#6f2623', '#2e0f0d', 2); poly([[tx - 7, ty + 14], [tx, ty - 6], [tx + 7, ty + 14]], '#1b0c0a'); });
+  const fl = 1 + 0.25 * Math.sin(t / 90);
+  ell(0, 6, 15 * fl, 9 * fl, 'rgba(255,170,60,.35)'); poly([[-7, 10], [0, -14 * fl], [7, 10]], '#ff9a2e'); poly([[-3.5, 10], [0, -5 * fl], [3.5, 10]], '#ffe27a');
+  ctx.strokeStyle = '#d33'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(62, -20); ctx.lineTo(62, -70); ctx.stroke(); poly([[62, -70], [92 + Math.sin(t / 300) * 3, -62], [62, -52]], '#111', '#d33', 1.5);
+  ctx.restore();
+}
+function drawCave(x, y, t) {
+  ctx.save(); ctx.translate(x, y);
+  poly([[-100, 40], [-80, -10], [-40, -50], [0, -62], [44, -46], [86, -6], [104, 40]], '#7b7164', '#3d372e', 3);
+  poly([[-40, -50], [0, -62], [44, -46], [10, -14], [-30, -20]], '#958b7c');
+  ctx.beginPath(); ctx.moveTo(-34, 40); ctx.quadraticCurveTo(-36, -22, 0, -24); ctx.quadraticCurveTo(36, -22, 34, 40); ctx.closePath(); ctx.fillStyle = '#0d0b0a'; ctx.fill(); ctx.strokeStyle = '#2f2923'; ctx.lineWidth = 3; ctx.stroke();
+  const a = 0.18 + 0.08 * Math.sin(t / 600); ctx.fillStyle = 'rgba(190,230,255,' + a + ')'; ell(0, 30, 70 + Math.sin(t / 700) * 6, 18, ctx.fillStyle); ell(0, -4, 50, 26, ctx.fillStyle);
+  ctx.restore();
+}
+const ICON = { sect: drawSect, village: drawVillage, city: drawCity, camp: drawCamp, cave: drawCave };
+function drawRuin(x, y) {
+  ctx.save(); ctx.translate(x, y); ell(0, 26, 120, 28, 'rgba(0,0,0,.18)'); poly([[-112, 30], [112, 30], [92, 8], [-96, 10]], '#9a9384', '#4f4a40');
+  for (const [px, hh, broken] of [[-80, 80, 1], [-40, 118, 0], [40, 112, 0], [80, 56, 1]]) { rect(px - 10, 10 - hh, 20, hh, '#c9c1ae', '#4f4a40'); if (!broken) rect(px - 16, 2 - hh, 32, 9, '#b3ab98', '#4f4a40'); }
+  rect(-56, -116, 112, 12, '#b3ab98', '#4f4a40'); ctx.restore();
+}
+function drawShrine(x, y, t) {
+  ctx.save(); ctx.translate(x, y); ell(0, 26, 84, 20, 'rgba(0,0,0,.18)'); rect(-62, -70, 12, 96, '#a8432f', '#4d1b15'); rect(50, -70, 12, 96, '#a8432f', '#4d1b15');
+  poly([[-88, -76], [88, -76], [76, -92], [-76, -92]], '#8c3a2f', '#4d1b15'); rect(-72, -60, 144, 10, '#a8432f', '#4d1b15');
+  const a = 0.25 + 0.15 * Math.sin(t / 400); ell(0, -8, 30, 30, 'rgba(160,230,255,' + a + ')'); ctx.restore();
+}
+function iconFor(l) {
+  if (l.kind === 'site') return l.sub === 'shrine' ? drawShrine : l.sub === 'ruin' ? drawRuin : (x, y, t) => { ctx.globalAlpha = 0.6; drawSect(x, y, t); ctx.globalAlpha = 1; };
+  return ICON[l.kind];
+}
+
+function label(text, x, y, px, color = '#fff5dc', sub) {
+  const s = px / cam.z; ctx.font = `600 ${s}px "Segoe UI", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.lineWidth = 4 / cam.z; ctx.strokeStyle = 'rgba(20,14,8,.9)'; ctx.lineJoin = 'round'; ctx.strokeText(text, x, y); ctx.fillStyle = color; ctx.fillText(text, x, y);
+  if (sub) { ctx.font = `${s * 0.78}px "Segoe UI", sans-serif`; ctx.strokeText(sub.t, x, y + s * 0.95); ctx.fillStyle = sub.c; ctx.fillText(sub.t, x, y + s * 0.95); }
+}
+
+// ====================== Asosiy chizish ======================
+const ACT = { sleep: '💤', eat: '🍚', work: '🔨', train: '🥋', socialize: '💬', heal: '🩹', flee: '💨', attack: '⚔️', hunt: '🎯', seek_master: '🔎' };
+function actIcon(a) { return a.startsWith('op:') ? '⚔️' : ACT[a] ?? ''; }
+const w2s = (x, y) => [(x - cam.x) * cam.z + W / 2, (y - cam.y) * cam.z + H / 2];
+const s2w = (x, y) => [(x - W / 2) / cam.z + cam.x, (y - H / 2) / cam.z + cam.y];
+
+function draw(now, dt) {
+  // kamera
+  if (cam.tx != null) {
+    const k = Math.min(1, dt * 5); cam.x = lerp(cam.x, cam.tx, k); cam.y = lerp(cam.y, cam.ty, k); cam.z = lerp(cam.z, cam.tz ?? cam.z, k);
+    if (Math.abs(cam.x - cam.tx) < 0.5 && Math.abs(cam.y - cam.ty) < 0.5) cam.tx = cam.ty = cam.tz = null;
+  }
+  if (follow && selected && npcs.has(selected)) { const n = npcs.get(selected); cam.x = lerp(cam.x, n.x, Math.min(1, dt * 4)); cam.y = lerp(cam.y, n.y, Math.min(1, dt * 4)); }
+  clampCam();
+
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.fillStyle = '#10201c'; ctx.fillRect(0, 0, W, H);
+  if (!MAP || !terrain) return;
+  ctx.save();
+  ctx.translate(W / 2, H / 2); ctx.scale(cam.z, cam.z); ctx.translate(-cam.x, -cam.y);
+  const vx0 = cam.x - W / 2 / cam.z, vy0 = cam.y - H / 2 / cam.z, vx1 = cam.x + W / 2 / cam.z, vy1 = cam.y + H / 2 / cam.z;
+  const inView = (x, y, m = 80) => x > vx0 - m && x < vx1 + m && y > vy0 - m && y < vy1 + m;
+
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(terrain.canvas, 0, 0, MAP.w, MAP.h);
+  // xarita chegarasi
+  ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 6; ctx.strokeRect(0, 0, MAP.w, MAP.h);
+
+  // hududlar
+  if (ST) for (const f of ST.factions) {
+    if (!f.active) continue; const b = MAP.locations.find((l) => l.id === f.base); if (!b) continue;
+    const r = 260 + Math.min(f.members, 30) * 6, g = ctx.createRadialGradient(b.x, b.y, 20, b.x, b.y, r);
+    g.addColorStop(0, f.c + '55'); g.addColorStop(1, f.c + '00'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, 7); ctx.fill();
+  }
+
+  // tog'lar va yo'llar
+  const U = MAP.tile, tp = cam.z * U;
+  const tc0 = Math.max(0, Math.floor(vx0 / U) - 1), tc1 = Math.min(MAP.cols - 1, Math.ceil(vx1 / U) + 1), tr0 = Math.max(0, Math.floor(vy0 / U) - 1), tr1 = Math.min(MAP.rows - 1, Math.ceil(vy1 / U) + 1);
+  if (tp >= 14) for (let r = tr0; r <= tr1; r++) for (let c = tc0; c <= tc1; c++) if (MAP.T[r * MAP.cols + c] === 2 && seenTile(c, r))
+    peak({ x: c * U + U / 2 + (hash2(c, r, 7) - 0.5) * 20, y: r * U + U * 0.9, s: 20 + hash2(c, r, 8) * 10, snow: r < 70 && hash2(c, r, 9) < 0.7 });
+  for (const p of MAP.paths) {
+    const pts = p.pts; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const trace = () => { ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length - 1; i++) { const mx = (pts[i][0] + pts[i + 1][0]) / 2, my = (pts[i][1] + pts[i + 1][1]) / 2; ctx.quadraticCurveTo(pts[i][0], pts[i][1], i === pts.length - 2 ? pts[i + 1][0] : mx, i === pts.length - 2 ? pts[i + 1][1] : my); } };
+    trace(); ctx.strokeStyle = 'rgba(60,40,20,.55)'; ctx.lineWidth = 15; ctx.stroke();
+    trace(); ctx.strokeStyle = '#c9a96c'; ctx.lineWidth = 9; ctx.stroke();
+    trace(); ctx.strokeStyle = '#e4cf9c'; ctx.lineWidth = 4; ctx.setLineDash([14, 10]); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // daraxtlar (joylashuvi bo'yicha saralangan) va binolar
+  const objs = [];
+  if (tp >= 14) for (let r = tr0; r <= tr1; r++) for (let c = tc0; c <= tc1; c++) if (MAP.T[r * MAP.cols + c] === 1 && seenTile(c, r))
+    for (let k = 0; k < 2; k++) { const t = { x: c * U + hash2(c, r, 20 + k) * U, y: r * U + hash2(c, r, 30 + k) * U, s: 0.9 + hash2(c, r, 40 + k) * 0.6, k: hash2(c, r, 50 + k) }; objs.push({ y: t.y, f: () => tree(t) }); }
+  for (const l of MAP.locations) { const f = iconFor(l); if (l.x != null && f && inView(l.x, l.y, 200) && seenAt(l.x, l.y)) objs.push({ y: l.y + 30, f: () => f(l.x, l.y, now) }); }
+  objs.sort((a, b) => a.y - b.y); for (const o of objs) o.f();
+
+  if (fogOn && fogCanvas) { ctx.imageSmoothingEnabled = true; ctx.drawImage(fogCanvas, 0, 0, MAP.w, MAP.h); }
+  // joy nomlari (tumanda: faqat ma'lumlar; mashhur shahar/sektalar '?' bilan)
+  for (const l of MAP.locations) {
+    if (l.x == null || !inView(l.x, l.y, 200) || (cam.z < 0.1 && l.kind !== 'city' && l.kind !== 'sect')) continue;
+    if (!seenAt(l.x, l.y)) { if (l.kind === 'city' || l.kind === 'sect') label(l.name + ' ?', l.x, l.y, 13, 'rgba(255,245,220,.6)'); continue; }
+    const fac = ST?.factions.find((f) => f.base === l.id && f.active);
+    const sub = fac ? { t: fac.name, c: fac.c } : null;
+    label(l.name, l.x, l.y - (l.kind === 'sect' ? 128 : l.kind === 'city' ? 108 : l.kind === 'cave' ? 74 : 64), l.kind === 'city' || l.kind === 'sect' ? 15 : 12, l.evil ? '#ff9a8f' : '#fff5dc', sub);
+  }
+
+  // to'lqinlar
+  for (let i = pulses.length - 1; i >= 0; i--) {
+    const p = pulses[i], a = (now - p.t0) / 2600; if (a >= 1) { pulses.splice(i, 1); continue; }
+    if (!seenAt(p.x, p.y)) continue;
+    ctx.strokeStyle = p.c; ctx.globalAlpha = (1 - a) * 0.9; ctx.lineWidth = 3 / cam.z * 2; ctx.beginPath(); ctx.arc(p.x, p.y, (8 + a * 40) / Math.min(1, cam.z * 2), 0, 7); ctx.stroke();
+    ctx.globalAlpha = (1 - a) * 0.25; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, (8 + a * 25) / Math.min(1, cam.z * 2), 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+  }
+
+  // NPC'lar
+  const list = [...npcs.values()].sort((a, b) => a.y - b.y);
+  const hov = hover.npc;
+  for (const n of list) {
+    n.x = lerp(n.x, n.tx, Math.min(1, dt * 6)); n.y = lerp(n.y, n.ty, Math.min(1, dt * 6));
+    if (!inView(n.x, n.y, 30) || (!n.me && !seenAt(n.x, n.y))) continue;
+    const sr = (3.4 + n.r * 0.5) * (0.85 + 0.3 * Math.min(cam.z, 3)), r = sr / cam.z;
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(n.x, n.y + r * 0.7, r * 1.1, r * 0.5, 0, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 7); ctx.fillStyle = n.c; ctx.fill();
+    ctx.lineWidth = 1.6 / cam.z; ctx.strokeStyle = n.mv ? '#fff' : 'rgba(0,0,0,.75)'; ctx.stroke();
+    if (n.inj > 0.3) { ctx.beginPath(); ctx.arc(n.x, n.y, r * 0.45, 0, 7); ctx.fillStyle = '#d22'; ctx.fill(); }
+    if (n.me) { const pr = r + (6 + 3 * Math.sin(now / 250)) / cam.z; ctx.strokeStyle = '#e3b341'; ctx.lineWidth = 3 / cam.z; ctx.beginPath(); ctx.arc(n.x, n.y, pr, 0, 7); ctx.stroke(); }
+    if (n.lead) { ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = 2 / cam.z; ctx.beginPath(); ctx.arc(n.x, n.y, r + 3 / cam.z, 0, 7); ctx.stroke(); }
+    if (n.id === selected || n === hov) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.2 / cam.z; ctx.beginPath(); ctx.arc(n.x, n.y, r + 6 / cam.z, 0, 7); ctx.stroke(); }
+    if (cam.z > 1.3) { const ic = actIcon(n.a); if (ic) { ctx.font = `${12 / cam.z}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText(ic, n.x, n.y - r - 5 / cam.z); } }
+    if (n.me || cam.z > 1.1 || n.id === selected || n === hov || n.lead && cam.z > 0.6) label(n.name, n.x, n.y + r + 13 / cam.z, 11, n.lead ? '#ffe28a' : '#fff5dc');
+  }
+  ctx.restore();
+
+  // Kecha/kunduz
+  const hod = dispH % 24, dark = clamp((Math.cos((hod / 24) * 6.2832) + 0.3) / 1.3, 0, 1) * 0.5;
+  if (dark > 0.01) { ctx.fillStyle = `rgba(8,14,52,${dark})`; ctx.fillRect(0, 0, W, H); }
+  // Chekka vinyeta
+  const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, Math.max(W, H) * 0.8); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.35)'); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+
+  drawMini();
+}
+
+function clampCam() {
+  if (!MAP) return;
+  cam.z = clamp(cam.z, cam.zmin, 4);
+  const hw = W / 2 / cam.z, hh = H / 2 / cam.z;
+  cam.x = hw * 2 >= MAP.w ? MAP.w / 2 : clamp(cam.x, hw, MAP.w - hw);
+  cam.y = hh * 2 >= MAP.h ? MAP.h / 2 : clamp(cam.y, hh, MAP.h - hh);
+}
+
+function drawMini() {
+  if (!terrain) return; const mw = mini.width, mh = mini.height, k = mw / MAP.w;
+  mctx.clearRect(0, 0, mw, mh); mctx.drawImage(terrain.canvas, 0, 0, mw, mh);
+  for (const l of MAP.locations) {
+    if (l.x == null) continue;
+    if (l.kind === 'city' || l.kind === 'sect') { mctx.strokeStyle = l.evil ? '#ff6b6b' : '#fff'; mctx.lineWidth = 1; mctx.strokeRect(l.x * k - 2.5, l.y * k - 2.5, 5, 5); }
+    else { mctx.fillStyle = 'rgba(255,255,255,.55)'; mctx.fillRect(l.x * k - 0.8, l.y * k - 0.8, 1.6, 1.6); }
+  }
+  if (fogOn && fogCanvas) mctx.drawImage(fogCanvas, 0, 0, mw, mh);
+  for (const n of npcs.values()) { if (!n.me && !seenAt(n.x, n.y)) continue; mctx.fillStyle = n.c; mctx.fillRect(n.x * k - 0.8, n.y * k - 0.8, n.me ? 3 : 1.6, n.me ? 3 : 1.6); }
+  const vw = W / cam.z * k, vh = H / cam.z * k; mctx.strokeStyle = '#ffd24a'; mctx.lineWidth = 1.5; mctx.strokeRect(cam.x * k - vw / 2, cam.y * k - vh / 2, vw, vh);
+}
+
+// ====================== Sichqoncha / klaviatura ======================
+const hover = { npc: null, loc: null };
+let drag = null;
+canvas.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, moved: false }; canvas.setPointerCapture(e.pointerId); canvas.classList.add('drag'); cam.tx = null; });
+canvas.addEventListener('pointermove', (e) => {
+  if (drag) {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+    if (drag.moved) { cam.x = drag.cx - dx / cam.z; cam.y = drag.cy - dy / cam.z; follow = false; syncFollow(); }
+  }
+  updateHover(e.clientX, e.clientY);
+});
+canvas.addEventListener('pointerup', (e) => {
+  canvas.classList.remove('drag');
+  if (drag && !drag.moved) { updateHover(e.clientX, e.clientY); if (hover.npc) selectNpc(hover.npc.id); else if (selected) { /* bo'sh joyni bosish tanlovni saqlaydi */ } }
+  drag = null;
+});
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault(); const [wx, wy] = s2w(e.clientX, e.clientY);
+  cam.z = clamp(cam.z * Math.exp(-e.deltaY * 0.0015), cam.zmin, 4);
+  cam.x = wx - (e.clientX - W / 2) / cam.z; cam.y = wy - (e.clientY - H / 2) / cam.z; cam.tx = null;
+}, { passive: false });
+// Yon panel: yashirish/ko'rsatish (tanlov eslab qolinadi)
+function setSide(hidden) {
+  document.body.classList.toggle('side-hidden', hidden);
+  $('#sidetoggle').textContent = hidden ? '⟨ Voqealar' : '⟩';
+  try { localStorage.setItem('wuxia.sideHidden', hidden ? '1' : '0'); } catch (e) { /* saqlash mumkin emas */ }
+}
+$('#sidetoggle').onclick = () => setSide(!document.body.classList.contains('side-hidden'));
+try { setSide(localStorage.getItem('wuxia.sideHidden') === '1'); } catch (e) { setSide(false); }
+
+addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'p' || e.key === 'P') { setSide(!document.body.classList.contains('side-hidden')); return; }
+  if (e.key === 'v' || e.key === 'V') { setFog(!fogOn); return; }
+  if (e.code === 'Space') { e.preventDefault(); setSpeed(ST && ST.speed === 0 ? 6 : 0); }
+  if (e.key === 'f' || e.key === 'F') { follow = !follow; syncFollow(); }
+  if (e.key === '+' || e.key === '=') cam.z = clamp(cam.z * 1.2, cam.zmin, 4);
+  if (e.key === '-') cam.z = clamp(cam.z / 1.2, cam.zmin, 4);
+  if (e.key === 'Escape') { selected = null; $('#card').style.display = 'none'; }
+});
+mini.addEventListener('pointerdown', (e) => { const r = mini.getBoundingClientRect(); cam.tx = (e.clientX - r.left) / r.width * MAP.w; cam.ty = (e.clientY - r.top) / r.height * MAP.h; cam.tz = cam.z; follow = false; syncFollow(); });
+
+function updateHover(mx, my) {
+  let best = null, bd = 14;
+  for (const n of npcs.values()) { if (!n.me && !seenAt(n.x, n.y)) continue; const [sx, sy] = w2s(n.x, n.y), d = Math.hypot(sx - mx, sy - my); if (d < bd) { bd = d; best = n; } }
+  hover.npc = best; hover.loc = null;
+  const tip = $('#tip');
+  if (best) tip.innerHTML = `<b>${esc(best.name)}</b><br><span class="kv">${esc(best.role)} · ${best.r}-bosqich · ${esc(best.a)}</span>`;
+  else {
+    const [wx, wy] = s2w(mx, my); let ld = 90;
+    for (const l of MAP?.locations ?? []) if (l.x != null) { const d = Math.hypot(l.x - wx, l.y - wy); if (d < ld) { ld = d; hover.loc = l; } }
+    if (hover.loc) { const c = [...npcs.values()].filter((n) => Math.hypot(n.x - hover.loc.x, n.y - hover.loc.y) < 140).length; tip.innerHTML = `<b>${esc(hover.loc.name)}</b><br><span class="kv">atrofda ${c} kishi</span>`; }
+  }
+  if (best || hover.loc) { tip.style.display = 'block'; tip.style.left = Math.min(mx + 14, W - 250) + 'px'; tip.style.top = (my + 14) + 'px'; } else tip.style.display = 'none';
+}
+
+// ====================== UI ======================
+const SPEEDS = [[0, '⏸'], [2, '2'], [6, '6'], [24, '24'], [96, '96'], ['max', 'MAX']];
+for (const [v, t] of SPEEDS) { const b = document.createElement('button'); b.textContent = t; b.dataset.v = v; b.onclick = () => setSpeed(v); $('#speed').appendChild(b); }
+async function setSpeed(v) { await fetch('/api/speed?v=' + v); if (ST) ST.speed = v === 'max' ? 'max' : Number(v); markSpeed(); }
+function markSpeed() { document.querySelectorAll('#speed button').forEach((b) => b.classList.toggle('on', ST && String(ST.speed) === b.dataset.v)); }
+$('#reset').onclick = async () => { await fetch('/api/reset?seed=' + (Number($('#seed').value) || 1)); lastSeq = 0; events = []; npcs.clear(); pulses.length = 0; first = true; selected = null; $('#card').style.display = 'none'; $('#evlist').innerHTML = ''; };
+document.querySelectorAll('#tabs button').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.pane').forEach((p) => p.classList.toggle('on', p.id === 'p-' + b.dataset.tab));
+});
+document.querySelectorAll('#filters button').forEach((b) => b.onclick = () => { evFilter = b.dataset.k; document.querySelectorAll('#filters button').forEach((x) => x.classList.toggle('on', x === b)); renderEvents(); });
+function syncFollow() { const b = $('#followbtn'); if (b) b.classList.toggle('on', follow); }
+
+function flyTo(x, y, z) { cam.tx = x; cam.ty = y; cam.tz = Math.max(cam.z, z ?? cam.z); follow = false; syncFollow(); }
+function selectNpc(id) { selected = id; detailAt = 0; $('#card').style.display = 'block'; refreshCard(); }
+
+function renderEvents() {
+  const list = $('#evlist'), items = events.filter((e) => (evFilter === 'all' || e.k === evFilter) && seenAt(e.x, e.y)).slice(0, 120);
+  list.innerHTML = items.map((e, i) => `<div class="ev ${e.k}" data-i="${i}"><small>${e.day}-kun · ${String(e.hod).padStart(2, '0')}:00</small>${esc(e.text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</div>`).join('') || '<div class="kv">Hozircha voqea yo\'q…</div>';
+  list.querySelectorAll('.ev').forEach((el) => el.onclick = () => { const e = items[+el.dataset.i]; flyTo(e.x, e.y, 1.2); });
+}
+function renderFactions(fs) {
+  $('#p-factions').innerHTML = fs.map((f) => `<div class="fac ${f.active ? '' : 'off'}"><h4><span class="dot" style="background:${f.c}"></span>${esc(f.name)}${f.active ? '' : ' <span class="tag">tarqalgan</span>'}${f.succession ? ' <span class="tag open">vorislik inqirozi</span>' : ''}</h4>
+    <div class="kv">Rahbar: <b>${esc(f.leader)}</b> · a'zolar: <b>${f.members}</b> · kumush: <b>${f.silver}</b></div>
+    ${f.wars?.length ? `<div style="color:#ff8a80;font-size:12px;margin-top:3px">⚔ Urush: ${esc(f.wars.join(', '))}</div>` : ''}${f.allies?.length ? `<div style="color:#8ee0b0;font-size:12px;margin-top:2px">🤝 Ittifoq: ${esc(f.allies.join(', '))}</div>` : ''}
+    ${f.tension.length ? '<div class="tens">' + f.tension.map((t) => `<span class="kv">${esc(t.name)}</span><div class="bar"><i style="width:${t.v}%;background:${t.v > 70 ? '#e5484d' : t.v > 40 ? '#e3b341' : '#4fa36f'}"></i></div><span>${t.v}</span>`).join('') + '</div>' : ''}</div>`).join('');
+}
+function renderStories(ss) {
+  $('#p-stories').innerHTML = ss.map((s) => `<div class="story"><div class="t">${esc(s.type)}<span class="tag ${s.status === 'open' ? 'open' : ''}">${s.status === 'open' ? 'davom etmoqda' : 'yakunlandi'}</span></div>
+    <div class="m">${s.day}-kun · ${esc(s.channel ?? '')} · ${esc(s.who)}</div>${s.outcome ? `<div>${esc(s.outcome)}</div>` : ''}</div>`).join('') || '<div class="kv">Hali hikoya yo\'q…</div>';
+}
+
+const TRAIT = { ambition: 'Shuhrat', loyalty: 'Sadoqat', greed: 'Ochko\'zlik', courage: 'Jasorat', honor: 'Sharaf', curiosity: 'Qiziquvchan', temper: 'Jahl', discipline: 'Intizom' };
+const NEED = { hunger: 'Ochlik', rest: 'Charchoq', safety: 'Xavf', social: 'Muloqot', purpose: 'Maqsad' };
+const bar = (v, max, col) => `<div class="bar"><i style="width:${clamp(v / max, 0, 1) * 100}%;background:${col}"></i></div>`;
+async function refreshCard() {
+  if (!selected) return;
+  const d = await (await fetch('/api/npc?id=' + encodeURIComponent(selected))).json().catch(() => null);
+  if (!d || d.error) return;
+  $('#card').innerHTML = `<h3><span class="dot" style="background:${d.c}"></span>${esc(d.name)}${d.alive ? '' : ' <span class="tag">halok bo\'lgan</span>'}<button class="x" onclick="selected=null;this.parentNode.parentNode.style.display='none'">✕</button></h3>
+    <div class="sub">${esc(d.role)} · ${esc(d.faction ?? 'mustaqil')} · ${d.age} yosh · ${d.realm}-bosqich</div>
+    <div class="row">Hozir: <b>${esc(d.action)}</b> @ <b>${esc(d.location)}</b> · uy: ${esc(d.home)}</div>
+    <div class="row">Kumush: <b>${d.silver}</b> · jarohat: <b>${Math.round(d.injury * 100)}%</b> · mashq: <b>${d.progress}</b></div>
+    <div style="margin-top:6px"><button id="followbtn" class="${follow ? 'on' : ''}" onclick="follow=!follow;syncFollow()">Kuzatish (F)</button></div>
+    <h5>Ehtiyojlar</h5><div class="meters">${Object.entries(d.needs).map(([k, v]) => `<span class="kv">${NEED[k]}</span>${bar(v, 100, v > 70 ? '#e5484d' : '#4f9dff')}<span>${Math.round(v)}</span>`).join('')}</div>
+    <h5>Xarakter</h5><div class="meters">${Object.entries(d.traits).map(([k, v]) => `<span class="kv">${TRAIT[k]}</span>${bar(v, 1, '#e3b341')}<span>${v.toFixed(2)}</span>`).join('')}</div>
+    ${d.mood ? `<div class="row">Kayfiyat: <b>${esc(d.mood)}</b>${d.toPlayer && (d.toPlayer.trust || d.toPlayer.affection || d.toPlayer.fear) ? ` · o'yinchiga: ishonch ${d.toPlayer.trust} · mehr ${d.toPlayer.affection} · qo'rquv ${d.toPlayer.fear}` : ''}</div>` : ''}
+    ${d.goals.length ? `<h5>Maqsadlar</h5>${d.goals.map((g) => `<div class="row"><b>${esc(g.text)}</b> (${g.since}-kundan)</div>`).join('')}` : ''}
+    ${d.bonds.length ? `<h5>Aloqalar</h5><div class="row">${d.bonds.map((b) => `<b>${esc(b.name)}</b> (${b.type})`).join(', ')}</div>` : ''}
+    ${d.relations.length ? `<h5>Munosabatlar</h5>${d.relations.map((r) => `<div class="row"><b>${esc(r.name)}</b> ishonch ${r.trust} · mehr ${r.affection} · qo'rquv ${r.fear} · qarz ${r.debt}</div>`).join('')}` : ''}
+    ${d.memories.length ? `<h5>Xotiralar</h5>${d.memories.map((m) => `<div class="row"><b>${esc(m.type)}</b>: ${esc(m.subject)}${m.object ? ' → ' + esc(m.object) : ''} · ${m.day}-kun · ${m.source === 'heard' ? 'eshitgan' : "ko'rgan"} (${m.conf})</div>`).join('')}` : ''}`;
+}
+
+// ====================== Tuman (o'yinchi kashf etgan joylar) ======================
+let EXP = null, fogCanvas = null, fogOn = true, pollN = 0;
+try { fogOn = localStorage.getItem('wuxia.obsFog') !== '0'; } catch (e) { /* */ }
+const seenTile = (c, r) => !fogOn || !EXP || !!EXP[r * MAP.cols + c];
+const seenAt = (x, y) => seenTile(clamp(Math.floor(x / MAP.tile), 0, MAP.cols - 1), clamp(Math.floor(y / MAP.tile), 0, MAP.rows - 1));
+function setExplored(b64) {
+  const n = MAP.cols * MAP.rows, bin = atob(b64), e = new Uint8Array(n);
+  for (let k = 0; k < n; k++) e[k] = (bin.charCodeAt(k >> 3) >> (k & 7)) & 1;
+  EXP = e;
+  if (!fogCanvas) { fogCanvas = document.createElement('canvas'); fogCanvas.width = MAP.cols; fogCanvas.height = MAP.rows; }
+  const c = fogCanvas.getContext('2d'), img = c.createImageData(MAP.cols, MAP.rows);
+  for (let k = 0; k < n; k++) if (!e[k]) { const o = k * 4; img.data[o] = 62; img.data[o + 1] = 68; img.data[o + 2] = 66; img.data[o + 3] = 222; }
+  c.putImageData(img, 0, 0);
+  renderEvents();
+}
+function setFog(on) {
+  fogOn = on; try { localStorage.setItem('wuxia.obsFog', on ? '1' : '0'); } catch (e) { /* */ }
+  const b = $('#fogbtn'); b.textContent = on ? '🌫 Tuman' : '👁 Hammasi'; b.classList.toggle('on', !on); renderEvents();
+}
+$('#fogbtn').onclick = () => setFog(!fogOn);
+setFog(fogOn);
+
+// ====================== Ma'lumot olish ======================
+let busy = false;
+async function poll() {
+  if (busy || !MAP) return; busy = true;
+  try {
+    const st = await (await fetch('/api/state?since=' + lastSeq + (pollN++ % 8 === 0 ? '&exp=1' : ''))).json();
+    if (st.explored) setExplored(st.explored);
+    if (ST && (st.h < ST.h || st.seed !== ST.seed)) { events = []; lastSeq = 0; npcs.clear(); first = true; $('#seed').value = st.seed; }
+    if (MAP && st.seed !== MAP.seed) { location.reload(); return; }   // yangi o'yin — boshqa dunyo
+    ST = st; lastSeq = st.lastSeq; if (first) dispH = st.h;
+    const seen = new Set();
+    for (const n of st.npcs) {
+      seen.add(n.id); let o = npcs.get(n.id);
+      if (!o) { o = { ...n, tx: n.x, ty: n.y }; npcs.set(n.id, o); } else { const { x, y, ...rest } = n; Object.assign(o, rest, { tx: x, ty: y }); }
+    }
+    for (const id of npcs.keys()) if (!seen.has(id)) npcs.delete(id);
+    if (st.events.length) {
+      const now = performance.now();
+      for (const e of st.events) if (!first && (e.k === 'war' || e.k === 'death' || e.k === 'story')) pulses.push({ x: e.x, y: e.y, t0: now, c: e.k === 'war' ? '#ff5a5f' : e.k === 'death' ? '#b9b0ff' : '#5fb0ff' });
+      events = [...st.events.slice().reverse(), ...events].slice(0, 400); renderEvents();
+    } else if (first) renderEvents();
+    renderFactions(st.factions); renderStories(st.stories);
+    $('#cnt').textContent = `tirik ${st.npcs.length} · o'lgan ${st.dead}`; $('#seed').placeholder = st.seed; if (first) $('#seed').value = st.seed;
+    markSpeed(); first = false;
+    if (selected && performance.now() - detailAt > 900) { detailAt = performance.now(); refreshCard(); }
+  } catch (e) { /* server vaqtincha javob bermadi */ } finally { busy = false; }
+}
+
+// ====================== Ishga tushirish ======================
+let prev = performance.now();
+function frame(now) {
+  const dt = Math.min(0.1, (now - prev) / 1000); prev = now;
+  if (innerWidth !== W || innerHeight !== H) resize();
+  if (ST) { dispH = (ST.speed === 'max' || ST.speed >= 96) ? ST.h : lerp(dispH, ST.h, Math.min(1, dt * 4)); const h = dispH; $('#clk').textContent = `${Math.floor(h / 24)}-kun · ${String(Math.floor(h % 24)).padStart(2, '0')}:00 · ${['Bahor', 'Yoz', 'Kuz', 'Qish'][Math.floor((h / 24 % 360) / 90)]} · ${ST.wx ?? ''}`; }
+  draw(now, dt); requestAnimationFrame(frame);
+}
+(async () => {
+  MAP = await (await fetch('/api/map')).json();
+  resize(); buildWorld(MAP);
+  cam.z = Math.max(W / MAP.w, H / MAP.h) * 1.35; cam.zmin = Math.max(W / MAP.w, H / MAP.h); { const home = MAP.locations.find((l) => l.id === 'willow_village'); cam.x = home ? home.x : MAP.w / 2; cam.y = home ? home.y : MAP.h / 2; cam.z = Math.max(cam.zmin, 0.3); }
+  await poll(); $('#loading').style.display = 'none';
+  setInterval(poll, 250); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

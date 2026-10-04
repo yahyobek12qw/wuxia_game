@@ -1,0 +1,1434 @@
+[
+  {
+    "id": "mo_tianhe",
+    "name": "Mo Tianhe",
+    "age": 81,
+    "role": "sect_leader",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 5,
+    "progress": 0.54,
+    "talent": 1.24,
+    "silver": 500,
+    "traits": {
+      "ambition": 0.2,
+      "loyalty": 0.85,
+      "greed": 0.1,
+      "courage": 0.7,
+      "honor": 0.9,
+      "curiosity": 0.5,
+      "temper": 0.2,
+      "discipline": 0.9
+    },
+    "bonds": [
+      {
+        "other": "han_jue",
+        "type": "student"
+      },
+      {
+        "other": "su_qinglan",
+        "type": "student"
+      },
+      {
+        "other": "fang_lu",
+        "type": "student"
+      }
+    ]
+  },
+  {
+    "id": "han_jue",
+    "name": "Han Jue",
+    "age": 56,
+    "role": "elder",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 4,
+    "progress": 0.02,
+    "talent": 1.1,
+    "silver": 300,
+    "traits": {
+      "ambition": 0.9,
+      "loyalty": 0.3,
+      "greed": 0.5,
+      "courage": 0.6,
+      "honor": 0.3,
+      "curiosity": 0.4,
+      "temper": 0.5,
+      "discipline": 0.75
+    },
+    "bonds": [
+      {
+        "other": "mo_tianhe",
+        "type": "master"
+      },
+      {
+        "other": "feng_wen",
+        "type": "student"
+      },
+      {
+        "other": "song_chao",
+        "type": "student"
+      },
+      {
+        "other": "wu_sheng",
+        "type": "student"
+      },
+      {
+        "other": "yuan_mei",
+        "type": "student"
+      },
+      {
+        "other": "sun_yun",
+        "type": "student"
+      },
+      {
+        "other": "gao_peng",
+        "type": "student"
+      }
+    ]
+  },
+  {
+    "id": "su_qinglan",
+    "name": "Su Qinglan",
+    "age": 49,
+    "role": "elder",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 4,
+    "progress": 0.14,
+    "talent": 0.85,
+    "silver": 200,
+    "traits": {
+      "ambition": 0.55,
+      "loyalty": 0.9,
+      "greed": 0.1,
+      "courage": 0.7,
+      "honor": 0.85,
+      "curiosity": 0.6,
+      "temper": 0.3,
+      "discipline": 0.8
+    },
+    "bonds": [
+      {
+        "other": "mo_tianhe",
+        "type": "master"
+      },
+      {
+        "other": "cheng_quan",
+        "type": "student"
+      },
+      {
+        "other": "lu_jing",
+        "type": "student"
+      },
+      {
+        "other": "zheng_mei",
+        "type": "student"
+      },
+      {
+        "other": "cai_mei",
+        "type": "student"
+      },
+      {
+        "other": "sun_ning",
+        "type": "student"
+      },
+      {
+        "other": "zhang_wei",
+        "type": "student"
+      }
+    ]
+  },
+  {
+    "id": "fang_lu",
+    "name": "Fang Lu",
+    "age": 63,
+    "role": "elder",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 4,
+    "progress": 0.53,
+    "talent": 1.12,
+    "silver": 250,
+    "traits": {
+      "ambition": 0.35,
+      "loyalty": 0.65,
+      "greed": 0.25,
+      "courage": 0.85,
+      "honor": 0.65,
+      "curiosity": 0.73,
+      "temper": 0.51,
+      "discipline": 0.7
+    },
+    "bonds": [
+      {
+        "other": "mo_tianhe",
+        "type": "master"
+      },
+      {
+        "other": "peng_fei",
+        "type": "student"
+      },
+      {
+        "other": "yuan_hui",
+        "type": "student"
+      },
+      {
+        "other": "shen_hao",
+        "type": "student"
+      },
+      {
+        "other": "ye_shan",
+        "type": "student"
+      }
+    ]
+  },
+  {
+    "id": "zhang_wei",
+    "name": "Zhang Wei",
+    "age": 19,
+    "role": "outer_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 2,
+    "progress": 0.32,
+    "talent": 1.2,
+    "silver": 15,
+    "traits": {
+      "ambition": 0.75,
+      "loyalty": 0.8,
+      "greed": 0.2,
+      "courage": 0.65,
+      "honor": 0.75,
+      "curiosity": 0.8,
+      "temper": 0.25,
+      "discipline": 0.7
+    },
+    "bonds": [
+      {
+        "other": "gao_peng",
+        "type": "rival"
+      },
+      {
+        "other": "su_qinglan",
+        "type": "master"
+      },
+      {
+        "other": "wu_sheng",
+        "type": "friend"
+      },
+      {
+        "other": "zhang_hua",
+        "type": "family"
+      }
+    ]
+  },
+  {
+    "id": "gao_peng",
+    "name": "Gao Peng",
+    "age": 21,
+    "role": "outer_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 2,
+    "progress": 0.51,
+    "talent": 0.92,
+    "silver": 40,
+    "traits": {
+      "ambition": 0.8,
+      "loyalty": 0.5,
+      "greed": 0.43,
+      "courage": 0.7,
+      "honor": 0.35,
+      "curiosity": 0.22,
+      "temper": 0.8,
+      "discipline": 0.5
+    },
+    "bonds": [
+      {
+        "other": "zhang_wei",
+        "type": "rival"
+      },
+      {
+        "other": "han_jue",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "feng_wen",
+    "name": "Feng Wen",
+    "age": 30,
+    "role": "inner_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 3,
+    "progress": 0.25,
+    "talent": 1.15,
+    "silver": 26,
+    "traits": {
+      "ambition": 0.52,
+      "loyalty": 0.36,
+      "greed": 0.79,
+      "courage": 0.35,
+      "honor": 0.38,
+      "curiosity": 0.71,
+      "temper": 0.42,
+      "discipline": 0.72
+    },
+    "bonds": [
+      {
+        "other": "han_jue",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "song_chao",
+    "name": "Song Chao",
+    "age": 26,
+    "role": "inner_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 3,
+    "progress": 0.45,
+    "talent": 1.04,
+    "silver": 59,
+    "traits": {
+      "ambition": 0.63,
+      "loyalty": 0.71,
+      "greed": 0.73,
+      "courage": 0.76,
+      "honor": 0.36,
+      "curiosity": 0.57,
+      "temper": 0.52,
+      "discipline": 0.76
+    },
+    "bonds": [
+      {
+        "other": "han_jue",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "wu_sheng",
+    "name": "Wu Sheng",
+    "age": 17,
+    "role": "outer_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 2,
+    "progress": 0.33,
+    "talent": 0.82,
+    "silver": 14,
+    "traits": {
+      "ambition": 0.55,
+      "loyalty": 0.82,
+      "greed": 0.34,
+      "courage": 0.21,
+      "honor": 0.19,
+      "curiosity": 0.65,
+      "temper": 0.75,
+      "discipline": 0.53
+    },
+    "bonds": [
+      {
+        "other": "han_jue",
+        "type": "master"
+      },
+      {
+        "other": "zhang_wei",
+        "type": "friend"
+      }
+    ]
+  },
+  {
+    "id": "yuan_mei",
+    "name": "Yuan Mei",
+    "age": 16,
+    "role": "outer_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 2,
+    "progress": 0.33,
+    "talent": 1.09,
+    "silver": 8,
+    "traits": {
+      "ambition": 0.16,
+      "loyalty": 0.81,
+      "greed": 0.24,
+      "courage": 0.19,
+      "honor": 0.75,
+      "curiosity": 0.6,
+      "temper": 0.2,
+      "discipline": 0.17
+    },
+    "bonds": [
+      {
+        "other": "han_jue",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "sun_yun",
+    "name": "Sun Yun",
+    "age": 16,
+    "role": "outer_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 1,
+    "progress": 0.02,
+    "talent": 0.99,
+    "silver": 12,
+    "traits": {
+      "ambition": 0.45,
+      "loyalty": 0.67,
+      "greed": 0.51,
+      "courage": 0.8,
+      "honor": 0.45,
+      "curiosity": 0.3,
+      "temper": 0.21,
+      "discipline": 0.6
+    },
+    "bonds": [
+      {
+        "other": "han_jue",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "cheng_quan",
+    "name": "Cheng Quan",
+    "age": 26,
+    "role": "inner_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 3,
+    "progress": 0,
+    "talent": 0.83,
+    "silver": 22,
+    "traits": {
+      "ambition": 0.57,
+      "loyalty": 0.33,
+      "greed": 0.31,
+      "courage": 0.28,
+      "honor": 0.67,
+      "curiosity": 0.57,
+      "temper": 0.82,
+      "discipline": 0.68
+    },
+    "bonds": [
+      {
+        "other": "su_qinglan",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "lu_jing",
+    "name": "Lu Jing",
+    "age": 29,
+    "role": "inner_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 3,
+    "progress": 0.34,
+    "talent": 1.14,
+    "silver": 56,
+    "traits": {
+      "ambition": 0.29,
+      "loyalty": 0.62,
+      "greed": 0.32,
+      "courage": 0.66,
+      "honor": 0.76,
+      "curiosity": 0.51,
+      "temper": 0.51,
+      "discipline": 0.44
+    },
+    "bonds": [
+      {
+        "other": "su_qinglan",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "zheng_mei",
+    "name": "Zheng Mei",
+    "age": 22,
+    "role": "outer_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 1,
+    "progress": 0.3,
+    "talent": 1,
+    "silver": 20,
+    "traits": {
+      "ambition": 0.2,
+      "loyalty": 0.41,
+      "greed": 0.78,
+      "courage": 0.66,
+      "honor": 0.77,
+      "curiosity": 0.17,
+      "temper": 0.83,
+      "discipline": 0.24
+    },
+    "bonds": [
+      {
+        "other": "su_qinglan",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "cai_mei",
+    "name": "Cai Mei",
+    "age": 18,
+    "role": "outer_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 1,
+    "progress": 0.36,
+    "talent": 1.02,
+    "silver": 13,
+    "traits": {
+      "ambition": 0.78,
+      "loyalty": 0.54,
+      "greed": 0.31,
+      "courage": 0.7,
+      "honor": 0.65,
+      "curiosity": 0.62,
+      "temper": 0.75,
+      "discipline": 0.58
+    },
+    "bonds": [
+      {
+        "other": "su_qinglan",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "sun_ning",
+    "name": "Sun Ning",
+    "age": 19,
+    "role": "outer_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 1,
+    "progress": 0.29,
+    "talent": 1.03,
+    "silver": 9,
+    "traits": {
+      "ambition": 0.79,
+      "loyalty": 0.8,
+      "greed": 0.48,
+      "courage": 0.47,
+      "honor": 0.7,
+      "curiosity": 0.76,
+      "temper": 0.32,
+      "discipline": 0.27
+    },
+    "bonds": [
+      {
+        "other": "su_qinglan",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "peng_fei",
+    "name": "Peng Fei",
+    "age": 26,
+    "role": "inner_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 3,
+    "progress": 0.01,
+    "talent": 0.98,
+    "silver": 48,
+    "traits": {
+      "ambition": 0.16,
+      "loyalty": 0.77,
+      "greed": 0.57,
+      "courage": 0.3,
+      "honor": 0.3,
+      "curiosity": 0.67,
+      "temper": 0.61,
+      "discipline": 0.46
+    },
+    "bonds": [
+      {
+        "other": "fang_lu",
+        "type": "master"
+      },
+      {
+        "other": "lin_yue",
+        "type": "lover"
+      }
+    ]
+  },
+  {
+    "id": "yuan_hui",
+    "name": "Yuan Hui",
+    "age": 28,
+    "role": "inner_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 3,
+    "progress": 0.1,
+    "talent": 0.96,
+    "silver": 44,
+    "traits": {
+      "ambition": 0.39,
+      "loyalty": 0.23,
+      "greed": 0.55,
+      "courage": 0.49,
+      "honor": 0.64,
+      "curiosity": 0.58,
+      "temper": 0.59,
+      "discipline": 0.29
+    },
+    "bonds": [
+      {
+        "other": "fang_lu",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "shen_hao",
+    "name": "Shen Hao",
+    "age": 20,
+    "role": "outer_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 2,
+    "progress": 0.36,
+    "talent": 0.89,
+    "silver": 14,
+    "traits": {
+      "ambition": 0.35,
+      "loyalty": 0.73,
+      "greed": 0.3,
+      "courage": 0.7,
+      "honor": 0.67,
+      "curiosity": 0.25,
+      "temper": 0.45,
+      "discipline": 0.62
+    },
+    "bonds": [
+      {
+        "other": "fang_lu",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "ye_shan",
+    "name": "Ye Shan",
+    "age": 20,
+    "role": "outer_disciple",
+    "faction": "qingyun",
+    "home": "qingyun_peak",
+    "realm": 1,
+    "progress": 0.56,
+    "talent": 1.21,
+    "silver": 9,
+    "traits": {
+      "ambition": 0.51,
+      "loyalty": 0.65,
+      "greed": 0.18,
+      "courage": 0.5,
+      "honor": 0.25,
+      "curiosity": 0.66,
+      "temper": 0.79,
+      "discipline": 0.27
+    },
+    "bonds": [
+      {
+        "other": "fang_lu",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "lei_hu",
+    "name": "Lei Hu",
+    "age": 41,
+    "role": "bandit_chief",
+    "faction": "black_wind",
+    "home": "black_wind_camp",
+    "realm": 4,
+    "progress": 0.15,
+    "talent": 1.18,
+    "silver": 150,
+    "traits": {
+      "ambition": 0.8,
+      "loyalty": 0.5,
+      "greed": 0.85,
+      "courage": 0.85,
+      "honor": 0.15,
+      "curiosity": 0.37,
+      "temper": 0.8,
+      "discipline": 0.4
+    },
+    "bonds": [
+      {
+        "other": "wu_kai",
+        "type": "sworn"
+      },
+      {
+        "other": "zhou_quan",
+        "type": "sworn"
+      }
+    ]
+  },
+  {
+    "id": "wu_kai",
+    "name": "Wu Kai",
+    "age": 38,
+    "role": "bandit_lieutenant",
+    "faction": "black_wind",
+    "home": "black_wind_camp",
+    "realm": 3,
+    "progress": 0.16,
+    "talent": 1.11,
+    "silver": 78,
+    "traits": {
+      "ambition": 0.51,
+      "loyalty": 0.26,
+      "greed": 0.67,
+      "courage": 0.69,
+      "honor": 0.19,
+      "curiosity": 0.61,
+      "temper": 0.73,
+      "discipline": 0.47
+    },
+    "bonds": [
+      {
+        "other": "lei_hu",
+        "type": "sworn"
+      }
+    ]
+  },
+  {
+    "id": "zhou_quan",
+    "name": "Zhou Quan",
+    "age": 35,
+    "role": "bandit_lieutenant",
+    "faction": "black_wind",
+    "home": "black_wind_camp",
+    "realm": 3,
+    "progress": 0.36,
+    "talent": 0.88,
+    "silver": 36,
+    "traits": {
+      "ambition": 0.27,
+      "loyalty": 0.83,
+      "greed": 0.86,
+      "courage": 0.65,
+      "honor": 0.12,
+      "curiosity": 0.36,
+      "temper": 0.2,
+      "discipline": 0.74
+    },
+    "bonds": [
+      {
+        "other": "lei_hu",
+        "type": "sworn"
+      }
+    ]
+  },
+  {
+    "id": "liu_chao",
+    "name": "Liu Chao",
+    "age": 27,
+    "role": "bandit",
+    "faction": "black_wind",
+    "home": "black_wind_camp",
+    "realm": 1,
+    "progress": 0.09,
+    "talent": 1.14,
+    "silver": 11,
+    "traits": {
+      "ambition": 0.45,
+      "loyalty": 0.75,
+      "greed": 0.7,
+      "courage": 0.45,
+      "honor": 0.27,
+      "curiosity": 0.54,
+      "temper": 0.63,
+      "discipline": 0.52
+    },
+    "bonds": []
+  },
+  {
+    "id": "li_lan",
+    "name": "Li Lan",
+    "age": 36,
+    "role": "bandit",
+    "faction": "black_wind",
+    "home": "black_wind_camp",
+    "realm": 1,
+    "progress": 0.14,
+    "talent": 0.89,
+    "silver": 6,
+    "traits": {
+      "ambition": 0.32,
+      "loyalty": 0.51,
+      "greed": 0.62,
+      "courage": 0.56,
+      "honor": 0.15,
+      "curiosity": 0.41,
+      "temper": 0.45,
+      "discipline": 0.44
+    },
+    "bonds": []
+  },
+  {
+    "id": "yuan_shan",
+    "name": "Yuan Shan",
+    "age": 36,
+    "role": "bandit",
+    "faction": "black_wind",
+    "home": "black_wind_camp",
+    "realm": 1,
+    "progress": 0.54,
+    "talent": 0.89,
+    "silver": 13,
+    "traits": {
+      "ambition": 0.66,
+      "loyalty": 0.33,
+      "greed": 0.61,
+      "courage": 0.15,
+      "honor": 0.21,
+      "curiosity": 0.19,
+      "temper": 0.54,
+      "discipline": 0.72
+    },
+    "bonds": []
+  },
+  {
+    "id": "tang_xin",
+    "name": "Tang Xin",
+    "age": 32,
+    "role": "bandit",
+    "faction": "black_wind",
+    "home": "black_wind_camp",
+    "realm": 1,
+    "progress": 0.44,
+    "talent": 0.8,
+    "silver": 5,
+    "traits": {
+      "ambition": 0.5,
+      "loyalty": 0.29,
+      "greed": 0.79,
+      "courage": 0.52,
+      "honor": 0.14,
+      "curiosity": 0.72,
+      "temper": 0.8,
+      "discipline": 0.7
+    },
+    "bonds": []
+  },
+  {
+    "id": "jiang_wen",
+    "name": "Jiang Wen",
+    "age": 21,
+    "role": "bandit",
+    "faction": "black_wind",
+    "home": "black_wind_camp",
+    "realm": 2,
+    "progress": 0.22,
+    "talent": 0.84,
+    "silver": 8,
+    "traits": {
+      "ambition": 0.27,
+      "loyalty": 0.33,
+      "greed": 0.72,
+      "courage": 0.4,
+      "honor": 0.41,
+      "curiosity": 0.79,
+      "temper": 0.23,
+      "discipline": 0.78
+    },
+    "bonds": []
+  },
+  {
+    "id": "wang_xin",
+    "name": "Wang Xin",
+    "age": 18,
+    "role": "bandit",
+    "faction": "black_wind",
+    "home": "black_wind_camp",
+    "realm": 1,
+    "progress": 0.12,
+    "talent": 0.94,
+    "silver": 20,
+    "traits": {
+      "ambition": 0.18,
+      "loyalty": 0.66,
+      "greed": 0.73,
+      "courage": 0.38,
+      "honor": 0.44,
+      "curiosity": 0.2,
+      "temper": 0.69,
+      "discipline": 0.3
+    },
+    "bonds": []
+  },
+  {
+    "id": "zhao_rong",
+    "name": "Zhao Rong",
+    "age": 34,
+    "role": "bandit",
+    "faction": "black_wind",
+    "home": "black_wind_camp",
+    "realm": 1,
+    "progress": 0.35,
+    "talent": 1.22,
+    "silver": 9,
+    "traits": {
+      "ambition": 0.84,
+      "loyalty": 0.5,
+      "greed": 0.76,
+      "courage": 0.36,
+      "honor": 0.34,
+      "curiosity": 0.8,
+      "temper": 0.2,
+      "discipline": 0.69
+    },
+    "bonds": []
+  },
+  {
+    "id": "liu_quan",
+    "name": "Liu Quan",
+    "age": 20,
+    "role": "bandit",
+    "faction": "black_wind",
+    "home": "black_wind_camp",
+    "realm": 2,
+    "progress": 0.27,
+    "talent": 0.88,
+    "silver": 10,
+    "traits": {
+      "ambition": 0.72,
+      "loyalty": 0.75,
+      "greed": 0.8,
+      "courage": 0.55,
+      "honor": 0.4,
+      "curiosity": 0.58,
+      "temper": 0.44,
+      "discipline": 0.65
+    },
+    "bonds": []
+  },
+  {
+    "id": "yang_ying",
+    "name": "Yang Ying",
+    "age": 37,
+    "role": "bandit",
+    "faction": "black_wind",
+    "home": "black_wind_camp",
+    "realm": 2,
+    "progress": 0.29,
+    "talent": 1.08,
+    "silver": 5,
+    "traits": {
+      "ambition": 0.32,
+      "loyalty": 0.17,
+      "greed": 0.74,
+      "courage": 0.77,
+      "honor": 0.41,
+      "curiosity": 0.33,
+      "temper": 0.33,
+      "discipline": 0.3
+    },
+    "bonds": []
+  },
+  {
+    "id": "zhou_pan",
+    "name": "Zhou Pan",
+    "age": 52,
+    "role": "magistrate",
+    "faction": "imperial",
+    "home": "river_city",
+    "realm": 0,
+    "progress": 0.4,
+    "talent": 1.15,
+    "silver": 900,
+    "traits": {
+      "ambition": 0.6,
+      "loyalty": 0.49,
+      "greed": 0.75,
+      "courage": 0.3,
+      "honor": 0.3,
+      "curiosity": 0.64,
+      "temper": 0.3,
+      "discipline": 0.59
+    },
+    "bonds": []
+  },
+  {
+    "id": "wen_bo",
+    "name": "Wen Bo",
+    "age": 38,
+    "role": "guard_captain",
+    "faction": "imperial",
+    "home": "river_city",
+    "realm": 3,
+    "progress": 0.36,
+    "talent": 0.94,
+    "silver": 120,
+    "traits": {
+      "ambition": 0.6,
+      "loyalty": 0.7,
+      "greed": 0.2,
+      "courage": 0.8,
+      "honor": 0.85,
+      "curiosity": 0.43,
+      "temper": 0.62,
+      "discipline": 0.8
+    },
+    "bonds": [
+      {
+        "other": "wei_fei",
+        "type": "student"
+      },
+      {
+        "other": "xu_feng",
+        "type": "student"
+      },
+      {
+        "other": "wang_ning",
+        "type": "student"
+      },
+      {
+        "other": "cai_long",
+        "type": "student"
+      }
+    ]
+  },
+  {
+    "id": "wei_fei",
+    "name": "Wei Fei",
+    "age": 21,
+    "role": "guard",
+    "faction": "imperial",
+    "home": "river_city",
+    "realm": 1,
+    "progress": 0.43,
+    "talent": 1.15,
+    "silver": 23,
+    "traits": {
+      "ambition": 0.72,
+      "loyalty": 0.37,
+      "greed": 0.32,
+      "courage": 0.22,
+      "honor": 0.74,
+      "curiosity": 0.46,
+      "temper": 0.56,
+      "discipline": 0.35
+    },
+    "bonds": [
+      {
+        "other": "wen_bo",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "xu_feng",
+    "name": "Xu Feng",
+    "age": 31,
+    "role": "guard",
+    "faction": "imperial",
+    "home": "river_city",
+    "realm": 1,
+    "progress": 0.23,
+    "talent": 1.05,
+    "silver": 15,
+    "traits": {
+      "ambition": 0.66,
+      "loyalty": 0.41,
+      "greed": 0.27,
+      "courage": 0.21,
+      "honor": 0.62,
+      "curiosity": 0.85,
+      "temper": 0.7,
+      "discipline": 0.62
+    },
+    "bonds": [
+      {
+        "other": "wen_bo",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "wang_ning",
+    "name": "Wang Ning",
+    "age": 35,
+    "role": "guard",
+    "faction": "imperial",
+    "home": "river_city",
+    "realm": 2,
+    "progress": 0.34,
+    "talent": 0.95,
+    "silver": 22,
+    "traits": {
+      "ambition": 0.2,
+      "loyalty": 0.33,
+      "greed": 0.46,
+      "courage": 0.81,
+      "honor": 0.22,
+      "curiosity": 0.42,
+      "temper": 0.4,
+      "discipline": 0.26
+    },
+    "bonds": [
+      {
+        "other": "wen_bo",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "cai_long",
+    "name": "Cai Long",
+    "age": 22,
+    "role": "guard",
+    "faction": "imperial",
+    "home": "river_city",
+    "realm": 1,
+    "progress": 0.13,
+    "talent": 1.07,
+    "silver": 39,
+    "traits": {
+      "ambition": 0.34,
+      "loyalty": 0.19,
+      "greed": 0.27,
+      "courage": 0.76,
+      "honor": 0.36,
+      "curiosity": 0.44,
+      "temper": 0.23,
+      "discipline": 0.32
+    },
+    "bonds": [
+      {
+        "other": "wen_bo",
+        "type": "master"
+      }
+    ]
+  },
+  {
+    "id": "lin_yue",
+    "name": "Lin Yue",
+    "age": 24,
+    "role": "innkeeper",
+    "faction": null,
+    "home": "willow_village",
+    "realm": 0,
+    "progress": 0.32,
+    "talent": 1.01,
+    "silver": 180,
+    "traits": {
+      "ambition": 0.3,
+      "loyalty": 0.55,
+      "greed": 0.3,
+      "courage": 0.5,
+      "honor": 0.7,
+      "curiosity": 0.85,
+      "temper": 0.75,
+      "discipline": 0.31
+    },
+    "bonds": [
+      {
+        "other": "peng_fei",
+        "type": "lover"
+      }
+    ]
+  },
+  {
+    "id": "bai_shu",
+    "name": "Bai Shu",
+    "age": 58,
+    "role": "doctor",
+    "faction": null,
+    "home": "willow_village",
+    "realm": 0,
+    "progress": 0.38,
+    "talent": 0.84,
+    "silver": 140,
+    "traits": {
+      "ambition": 0.16,
+      "loyalty": 0.5,
+      "greed": 0.4,
+      "courage": 0.62,
+      "honor": 0.8,
+      "curiosity": 0.75,
+      "temper": 0.2,
+      "discipline": 0.51
+    },
+    "bonds": []
+  },
+  {
+    "id": "zhang_hua",
+    "name": "Zhang Hua",
+    "age": 23,
+    "role": "farmer",
+    "faction": null,
+    "home": "willow_village",
+    "realm": 0,
+    "progress": 0.25,
+    "talent": 0.89,
+    "silver": 12,
+    "traits": {
+      "ambition": 0.39,
+      "loyalty": 0.47,
+      "greed": 0.81,
+      "courage": 0.55,
+      "honor": 0.75,
+      "curiosity": 0.17,
+      "temper": 0.52,
+      "discipline": 0.43
+    },
+    "bonds": [
+      {
+        "other": "zhang_wei",
+        "type": "family"
+      }
+    ]
+  },
+  {
+    "id": "he_qiang",
+    "name": "He Qiang",
+    "age": 40,
+    "role": "farmer",
+    "faction": null,
+    "home": "willow_village",
+    "realm": 0,
+    "progress": 0.52,
+    "talent": 0.9,
+    "silver": 9,
+    "traits": {
+      "ambition": 0.2,
+      "loyalty": 0.29,
+      "greed": 0.67,
+      "courage": 0.84,
+      "honor": 0.57,
+      "curiosity": 0.46,
+      "temper": 0.62,
+      "discipline": 0.15
+    },
+    "bonds": [
+      {
+        "other": "liang_rui",
+        "type": "family"
+      }
+    ]
+  },
+  {
+    "id": "liang_rui",
+    "name": "Liang Rui",
+    "age": 28,
+    "role": "farmer",
+    "faction": null,
+    "home": "willow_village",
+    "realm": 0,
+    "progress": 0.54,
+    "talent": 1.09,
+    "silver": 6,
+    "traits": {
+      "ambition": 0.81,
+      "loyalty": 0.56,
+      "greed": 0.42,
+      "courage": 0.48,
+      "honor": 0.64,
+      "curiosity": 0.46,
+      "temper": 0.83,
+      "discipline": 0.62
+    },
+    "bonds": [
+      {
+        "other": "he_qiang",
+        "type": "family"
+      }
+    ]
+  },
+  {
+    "id": "jiang_yan",
+    "name": "Jiang Yan",
+    "age": 50,
+    "role": "farmer",
+    "faction": null,
+    "home": "willow_village",
+    "realm": 0,
+    "progress": 0.5,
+    "talent": 1.2,
+    "silver": 3,
+    "traits": {
+      "ambition": 0.5,
+      "loyalty": 0.47,
+      "greed": 0.7,
+      "courage": 0.7,
+      "honor": 0.64,
+      "curiosity": 0.47,
+      "temper": 0.46,
+      "discipline": 0.53
+    },
+    "bonds": [
+      {
+        "other": "liu_hao",
+        "type": "family"
+      }
+    ]
+  },
+  {
+    "id": "liu_hao",
+    "name": "Liu Hao",
+    "age": 23,
+    "role": "farmer",
+    "faction": null,
+    "home": "willow_village",
+    "realm": 0,
+    "progress": 0.17,
+    "talent": 1.07,
+    "silver": 2,
+    "traits": {
+      "ambition": 0.72,
+      "loyalty": 0.78,
+      "greed": 0.74,
+      "courage": 0.81,
+      "honor": 0.7,
+      "curiosity": 0.23,
+      "temper": 0.57,
+      "discipline": 0.76
+    },
+    "bonds": [
+      {
+        "other": "jiang_yan",
+        "type": "family"
+      }
+    ]
+  },
+  {
+    "id": "chen_bin",
+    "name": "Chen Bin",
+    "age": 45,
+    "role": "merchant",
+    "faction": null,
+    "home": "willow_village",
+    "realm": 0,
+    "progress": 0.03,
+    "talent": 1.2,
+    "silver": 400,
+    "traits": {
+      "ambition": 0.69,
+      "loyalty": 0.79,
+      "greed": 0.7,
+      "courage": 0.46,
+      "honor": 0.36,
+      "curiosity": 0.21,
+      "temper": 0.38,
+      "discipline": 0.84
+    },
+    "bonds": []
+  },
+  {
+    "id": "feng_xin",
+    "name": "Feng Xin",
+    "age": 39,
+    "role": "merchant",
+    "faction": null,
+    "home": "river_city",
+    "realm": 0,
+    "progress": 0.47,
+    "talent": 0.82,
+    "silver": 700,
+    "traits": {
+      "ambition": 0.4,
+      "loyalty": 0.43,
+      "greed": 0.75,
+      "courage": 0.41,
+      "honor": 0.42,
+      "curiosity": 0.78,
+      "temper": 0.49,
+      "discipline": 0.26
+    },
+    "bonds": []
+  },
+  {
+    "id": "chen_kai",
+    "name": "Chen Kai",
+    "age": 47,
+    "role": "blacksmith",
+    "faction": null,
+    "home": "river_city",
+    "realm": 1,
+    "progress": 0.11,
+    "talent": 1.2,
+    "silver": 220,
+    "traits": {
+      "ambition": 0.5,
+      "loyalty": 0.32,
+      "greed": 0.3,
+      "courage": 0.2,
+      "honor": 0.21,
+      "curiosity": 0.39,
+      "temper": 0.65,
+      "discipline": 0.8
+    },
+    "bonds": []
+  },
+  {
+    "id": "he_xue",
+    "name": "He Xue",
+    "age": 33,
+    "role": "innkeeper",
+    "faction": null,
+    "home": "river_city",
+    "realm": 0,
+    "progress": 0.43,
+    "talent": 1.1,
+    "silver": 260,
+    "traits": {
+      "ambition": 0.71,
+      "loyalty": 0.62,
+      "greed": 0.58,
+      "courage": 0.61,
+      "honor": 0.64,
+      "curiosity": 0.7,
+      "temper": 0.69,
+      "discipline": 0.74
+    },
+    "bonds": []
+  },
+  {
+    "id": "gu_lao",
+    "name": "Gu Lao",
+    "age": 97,
+    "role": "hermit",
+    "faction": null,
+    "home": "hidden_cave",
+    "realm": 6,
+    "progress": 0.06,
+    "talent": 0.96,
+    "silver": 0,
+    "traits": {
+      "ambition": 0.05,
+      "loyalty": 0.5,
+      "greed": 0,
+      "courage": 0.9,
+      "honor": 0.85,
+      "curiosity": 0.3,
+      "temper": 0.2,
+      "discipline": 1
+    },
+    "bonds": []
+  }
+]

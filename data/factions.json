@@ -1,0 +1,8 @@
+[
+  { "id": "qingyun", "name": "Qingyun sektasi", "ideology": "righteous", "base": "qingyun_peak",
+    "leader": "mo_tianhe", "silver": 2000, "tension": { "black_wind": 40, "imperial": 10 }, "cohesion": 0.8, "active": true, "lastOpDay": -10 },
+  { "id": "black_wind", "name": "Qora Shamol qaroqchilari", "ideology": "demonic", "base": "black_wind_camp",
+    "leader": "lei_hu", "silver": 300, "tension": { "qingyun": 40, "imperial": 30 }, "cohesion": 0.7, "active": true, "lastOpDay": -10 },
+  { "id": "imperial", "name": "Imperator hokimiyati", "ideology": "neutral", "base": "river_city",
+    "leader": "zhou_pan", "silver": 3000, "tension": { "black_wind": 30, "qingyun": 10 }, "cohesion": 0.7, "active": true, "lastOpDay": -10 }
+]
