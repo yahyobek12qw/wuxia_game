@@ -140,7 +140,7 @@ function coast(w: World, n: NPC): boolean {
 
 export function act(w: World, n: NPC): void {
   if (n.opId) {
-    const op = w.ops.find(o => o.id === n.opId);
+    const op = w.perHour('opById', () => new Map(w.ops.map(o => [o.id, o]))).get(n.opId) ?? w.ops.find(o => o.id === n.opId);
     if (op && !op.resolved && w.h <= op.end) { n.action = `op:${op.type}`; return; }
     n.opId = undefined;
   }
@@ -258,7 +258,7 @@ export function updateNeeds(n: NPC): void {
 export function socialHour(w: World): void {
   const r = w.rng.get('social');
   const byLoc = new Map<string, NPC[]>();
-  for (const n of w.alive()) if (n.action === 'socialize') byLoc.set(n.location, [...(byLoc.get(n.location) ?? []), n]);
+  for (const n of w.alive()) if (n.action === 'socialize') { const g = byLoc.get(n.location); if (g) g.push(n); else byLoc.set(n.location, [n]); }
   for (const [loc, group] of byLoc) {
     r.shuffle(group);
     for (let i = 0; i + 1 < group.length && i < 8; i += 2) {   // ko'pi bilan 4 juft

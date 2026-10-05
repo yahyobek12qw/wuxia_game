@@ -9,7 +9,8 @@ import { invariants } from './invariants.js';
 
 const args = Object.fromEntries(process.argv.slice(2).map(a => a.replace(/^--/, '').split('=')));
 const seeds = Number(args.seeds ?? 3), days = Number(args.days ?? 365);
-const rows: string[] = [], causes: Record<string, number> = {}, types: Record<string, number> = {}, diplo: Record<string, number> = {};
+const rows: string[] = [], causes: Record<string, number> = {}, types: Record<string, number> = {}, diplo: Record<string, number> = {}, quests: Record<string, number> = {};
+const QUEST_OUT = ['shop_closed', 'crippled', 'relief_sent'];
 let pass = 0;
 for (let seed = 1; seed <= seeds; seed++) {
   const w = new World(seed), g = buildGrid(w, seed); extendGeo(w, g); populate(w, g, seed);
@@ -22,6 +23,7 @@ for (let seed = 1; seed <= seeds; seed++) {
   for (const n of dead) causes[n.causeOfDeath!] = (causes[n.causeOfDeath!] ?? 0) + 1;
   const surf = w.seeds.filter(s => s.surfaced); for (const s of surf) types[s.type] = (types[s.type] ?? 0) + 1;
   const outerEv = w.events.filter(e => outer.has(e.location) && ['raid', 'raid_repelled', 'ambush', 'ambush_repelled', 'death', 'new_leader', 'expedition_victory', 'expedition_failed'].includes(e.type)).length;
+  for (const e of w.events) if (e.type === 'quest_posted') quests[e.data!.kind as string] = (quests[e.data!.kind as string] ?? 0) + 1; else if (QUEST_OUT.includes(e.type)) quests[e.type] = (quests[e.type] ?? 0) + 1;
   for (const e of w.events) if (['war_declared', 'peace_made', 'alliance_formed', 'alliance_broken', 'ally_joins', 'tournament'].includes(e.type)) diplo[e.type] = (diplo[e.type] ?? 0) + 1;
   const cnt = (t: string) => w.events.filter(e => e.type === t).length, born = cnt('born'), came = cnt('wanderer_arrived');
   const fNow = Object.values(w.factions).filter(f => f.active).length, bad = invariants(w);
@@ -33,6 +35,7 @@ for (let seed = 1; seed <= seeds; seed++) {
 const report = [`# Katta dunyo soak: ${seeds} seed × ${days} kun`, '', `Gate (invariantlar, aholi ±30%, ≥20 hikoya, tashqi dunyoda ≥20 voqea, < 100 ms/kun har 1000 NPC): **${pass}/${seeds} PASS**`, '',
   '| Seed | Aholi | O\'limlar | Tug\'ildi + keldi | Nikoh | Voyaga yetdi | Ocharchilik | Faol fraksiyalar | Hikoyalar | Turlar | Tashqi voqealar | ms/kun | Invariant | Gate |', '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |', ...rows, '',
   '## Hikoya turlari', '', ...Object.entries(types).sort((a, b) => b[1] - a[1]).map(([k, v]) => `- ${k}: ${v}`), '',
+  '## Iltimoslar (yiliga, o\'rtacha bir seed) va oqibatlar', '', ...Object.entries(quests).sort((a, b) => b[1] - a[1]).map(([k, v]) => `- ${k}: ${(v / seeds * 365 / days).toFixed(0)}`), '',
   '## Diplomatiya (jami)', '', ...Object.entries(diplo).map(([k, v]) => `- ${k}: ${v}`), '',
   "## O'lim sabablari", '', ...Object.entries(causes).sort((a, b) => b[1] - a[1]).map(([k, v]) => `- ${k}: ${v}`)].join('\n');
 mkdirSync('out', { recursive: true }); writeFileSync('out/big_soak_report.md', report);

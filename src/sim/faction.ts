@@ -69,9 +69,10 @@ function banditAI(w: World, f: Faction, leader: NPC, mem: NPC[], r: Rng): void {
     const st = settlementOf(w, v);   // boy, lekin himoyasiz qishloq — eng yaxshi o'lja
     options.push(['raid', v, 0.35 * g + 0.4 * pressure + 0.2 * amb - 0.5 * villageDef / Math.max(1, atkPower) + 0.15 + (st ? 0.25 * st.prosperity / 100 - 0.25 * st.security / 100 : 0)]);
   }
-  for (const road of near(w.tradeRoads(), AMBUSH_RANGE)) {
+  const caravans = (w.day + 1) % 7 === 2 ? caravanRoads(w) : null;   // ertaga bozor kuni: josuslar karvon qaysi yo'ldan o'tishini biladi
+  for (const road of near(caravans ? [...new Set([...w.tradeRoads(), ...caravans])] : w.tradeRoads(), AMBUSH_RANGE)) {
     const owner = w.locations[road]?.owner, patrolled = !f.bribed && !!owner && !!w.factions[owner]?.active;
-    options.push(['ambush', road, 0.3 * g + 0.35 * pressure + (patrolled ? 0.05 : 0.3)]);
+    options.push(['ambush', road, 0.3 * g + 0.35 * pressure + (patrolled ? 0.05 : 0.3) + (caravans?.has(road) ? CARAVAN_BONUS : 0)]);
   }
   for (const x of Object.values(w.factions)) {
     if (!x.active || x.ideology !== 'righteous' || x.parent || w.tension(f.id, x.id) <= 60) continue;
@@ -86,6 +87,20 @@ function banditAI(w: World, f: Faction, leader: NPC, mem: NPC[], r: Rng): void {
   const team = r.shuffle([...avail]).slice(0, n);
   if (type === 'raid' && !team.includes(leader) && ready(leader) && r.chance(0.6)) team[0] = leader;
   planOp(w, f, type, target, team, type === 'raid' ? 1 : 8, type === 'raid' ? 2 : 10);
+}
+
+/** Savdogarlar bozor kuni (npcAI workplace: haftada bir) qo'shni bozorga boradigan yo'llar — pistirma uchun eng boy o'lja. */
+const CARAVAN_BONUS = 0.05;
+function caravanRoads(w: World): Set<string> {
+  return w.perHour('caravanRoads', () => {
+    const roads = new Set<string>();
+    for (const n of w.alive()) {
+      if (n.role !== 'merchant' || n.player) continue;
+      const to = w.tradePartner(n.home);
+      if (to) for (const l of w.route(n.home, to) ?? []) roads.add(l.road);
+    }
+    return roads;
+  });
 }
 
 function sectAI(w: World, f: Faction, leader: NPC | undefined, mem: NPC[], r: Rng): void {
@@ -370,13 +385,31 @@ export function plots(w: World): void {
       }
     }
   }
-  // Sir ochilishi: noma'lum qotilni bir necha kishi biladi
+  // Sir ochilishi: noma'lum qotilni bir necha kishi biladi (haftada bir — butun aholi xotirasini ko'rib chiqish qimmat)
+  if (w.day % 7 !== 4) return;
+  const exposed = new Set(w.eventsOf('murder_exposed').map(e => e.object));
+  const hidden = new Map<string, string>();   // fosh bo'lmagan qurbon → tirik qotil
   for (const victim of Object.values(w.npcs)) {
     if (victim.alive || victim.causeOfDeath === undefined || !['assassination', 'sudden_illness'].includes(victim.causeOfDeath)) continue;
-    if (w.events.some(e => e.type === 'murder_exposed' && e.object === victim.id)) continue;
+    if (exposed.has(victim.id)) continue;
     const culprit = w.npc(victim.killer);
-    if (!culprit?.alive) continue;
-    const knowers = w.alive().filter(n => n.memories.some(m => m.type === 'killed' && m.object === victim.id && m.subject === culprit.id && m.confidence > 0.35));
+    if (culprit?.alive) hidden.set(victim.id, culprit.id);
+  }
+  if (!hidden.size) return;
+  // Kim nimani biladi — butun aholi xotirasi bo'ylab bitta o'tish (har qurbon uchun alohida emas)
+  const known = new Map<string, NPC[]>();
+  for (const n of w.alive()) {
+    const seen = new Set<string>();
+    for (const m of n.memories) {
+      if (m.type !== 'killed' || m.confidence <= 0.35 || !m.object || seen.has(m.object) || hidden.get(m.object) !== m.subject) continue;
+      seen.add(m.object);
+      let l = known.get(m.object); if (!l) known.set(m.object, l = []); l.push(n);
+    }
+  }
+  for (const [vid, cid] of hidden) {
+    const victim = w.npcs[vid], culprit = w.npcs[cid];
+    if (!culprit.alive) continue;
+    const knowers = known.get(vid) ?? [];
     if (knowers.length >= 3) {
       w.emit({ type: 'murder_exposed', location: culprit.location, subject: culprit.id, object: victim.id, data: { knowers: knowers.map(k => k.id) } });
       const f = culprit.faction ? w.factions[culprit.faction] : undefined;

@@ -29,6 +29,7 @@ function post(w: World, q: Omit<Quest, 'id' | 'day' | 'status'>): Quest | null {
   if (openQuests(w).length >= MAX_OPEN || B.list.some(x => x.status === 'open' && x.kind === q.kind && x.giver === q.giver)) return null;
   const full: Quest = { ...q, id: w.nextId('q'), day: w.day, status: 'open' };
   B.list.push(full);
+  w.emit({ type: 'quest_posted', location: full.place, subject: full.giver, object: full.target, data: { kind: full.kind, id: full.id } });   // statistika va tarix uchun (yilnomada ko'rinmaydi)
   return full;
 }
 const adultAt = (w: World, loc: string) => residentsOf(w, loc).filter(n => !isChild(n) && !n.player);
@@ -38,11 +39,9 @@ export function questsDaily(w: World): void {
   const B = book(w), r = w.rng.get('quests');
   for (let k = w.events.length - 1; k >= 0 && w.events[k].seq > B.seq; k--) {
     const e = w.events[k];
-    if (e.type === 'ambush' && e.object) {
-      for (const v of (e.data?.victims as string[]) ?? []) {
-        const m = w.npcs[v];
-        if (m?.alive && m.role === 'merchant') post(w, { kind: 'caravan', giver: m.id, place: m.home, gang: e.object, reward: Math.round(40 + 0.2 * m.silver), due: w.day + 20 });
-      }
+    if (e.type === 'ambush' && e.object) {   // bitta pistirma — bitta karvon: iltimosni eng boy savdogar qiladi
+      const m = ((e.data?.victims as string[]) ?? []).map(v => w.npcs[v]).filter(x => x?.alive && x.role === 'merchant').sort((a, b) => b.silver - a.silver)[0];
+      if (m) post(w, { kind: 'caravan', giver: m.id, place: m.home, gang: e.object, reward: Math.round(40 + 0.2 * m.silver), due: w.day + 20 });
     } else if (e.type === 'theft' && e.secret && e.object && (e.data?.amount as number) >= 10) {
       post(w, { kind: 'theft', giver: e.object, place: e.location, target: e.subject, amount: e.data!.amount as number, reward: 10 + (e.data!.amount as number), due: w.day + 15, clues: [] });
     } else if (e.type === 'territory_seized' && e.object) {
@@ -76,9 +75,10 @@ export function questsDaily(w: World): void {
     if (q.kind === 'caravan' && !w.factions[q.gang!]?.active) complete(w, q, null);
     else if ((q.kind === 'theft' || q.kind === 'murder') && t && !t.alive) complete(w, q, t.killer === 'player' ? 'player' : null);
     else if (q.kind === 'liberate' && terr(w).held[q.place]?.by !== q.gang) {
-      const lib = [...w.events].reverse().find(e => e.type === 'territory_liberated' && e.location === q.place);
+      const lib = w.lastEventOf(['territory_liberated'], q.day, e => e.location === q.place);
       complete(w, q, lib?.subject === 'player' ? 'player' : null);
     } else if (q.kind === 'relief' && econ(w).s[q.place]?.famine === undefined) complete(w, q, null);
+    else if (q.kind === 'relief' && lordAid(w, q, r.next())) continue;
     else if (q.kind === 'healer' && giver.injury < 0.2) complete(w, q, null);
     else if (w.day > q.due) fail(w, q, r.next());
   }
@@ -87,6 +87,21 @@ export function questsDaily(w: World): void {
   const due = B.later.filter(l => l.at <= w.h);
   B.later = B.later.filter(l => l.at > w.h);
   for (const l of due) fire(w, l);
+}
+
+/** Och qishloqqa don olib kelish (o'yinchi yoki hudud egasi): ~900 birlik don aholiga bo'linadi. */
+export function sendGrain(w: World, place: string): boolean {
+  const s = econ(w).s[place]; if (!s) return false;
+  s.food += 900 / Math.max(3, s.pop);
+  return true;
+}
+/** Dunyoning o'zi hal qiladi: hudud egasi (sekta yoki hokimiyat) xazinasi yetsa, och qishloqqa don karvoni yuboradi. */
+function lordAid(w: World, q: Quest, roll: number): boolean {
+  const f = w.factions[w.locations[q.place]?.owner ?? ''];
+  if (!f?.active || f.ideology === 'demonic' || f.silver < 300 || roll >= 0.06 || !sendGrain(w, q.place)) return false;
+  f.silver -= 60;
+  w.emit({ type: 'relief_sent', location: q.place, subject: f.id });
+  return true;
 }
 
 /** Iltimos bajarildi: o'yinchi bajargan bo'lsa — mukofot, minnatdorlik, shon-shuhrat. */

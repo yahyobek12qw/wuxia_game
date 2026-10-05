@@ -1,5 +1,5 @@
 // O'yinchi qatlami: o'yinchi sim ichidagi haqiqiy NPC; har harakat dunyo vaqtini oldinga suradi.
-import { accuse, book, complete, openQuests } from '../sim/quests.js';
+import { accuse, book, complete, openQuests, sendGrain } from '../sim/quests.js';
 import { econ, residentsOf } from '../sim/settlement.js';
 import { questView } from './questView.js';
 import { AFF_NAME, CATALOG, initNpc, learn, techOf, type Affinity } from '../sim/cultivation.js';
@@ -133,22 +133,28 @@ export class Game {
       const before = this.w.seq;
       stepHour(this.w); done++;
       each?.();
-      if (this.w.events.some(e => e.seq > before && (e.subject === 'player' || e.object === 'player'))) break;
+      if (this.sinceSeq(before).some(e => e.subject === 'player' || e.object === 'player')) break;
     }
     this.digest();
     return done;
   }
+  /** seq dan keyingi voqealar (ro'yxat oxiridan — butun tarixni skanerlamasdan). */
+  private sinceSeq(seq: number) {
+    const ev = this.w.events; let k = ev.length;
+    while (k > 0 && ev[k - 1].seq > seq) k--;
+    return ev.slice(k);
+  }
   private digest(): void {
     const near = (id: string) => { const [x, y] = locPt(this.w, id); const [c, r] = tileOf(x, y); return Math.hypot(c - this.tx, r - this.ty) <= 8; };
-    for (const e of this.w.events) {
-      if (e.seq <= this.seenSeq) continue;
+    const fresh = this.sinceSeq(this.seenSeq);
+    for (const e of fresh) {
       const text = line(this.w, e);
       const mine = e.subject === 'player' || e.object === 'player';
       if (text && (mine || (near(e.location) && ['death', 'raid', 'raid_repelled', 'ambush', 'ambush_start', 'raid_start', 'expedition_start', 'combat'].includes(e.type)))) {
         this.say(mine ? text : `Yaqinda: ${text}`, mine ? 'alert' : 'info');
       } else if (e.type === 'combat' && mine) this.say(`${this.w.nameOf(e.subject)} ${this.w.nameOf(e.object)}ga zarba berdi.`, 'alert');
     }
-    const vend = !this.enc && this.p.alive ? this.w.events.find(e => e.seq > this.seenSeq && e.type === 'vendetta' && e.object === 'player') : undefined;
+    const vend = !this.enc && this.p.alive ? fresh.find(e => e.type === 'vendetta' && e.object === 'player') : undefined;
     const avenger = vend ? this.w.npc(vend.subject) : undefined;
     if (avenger?.alive) this.beginEnc({ kind: 'npc', title: `Qasoskor: ${avenger.name} (${this.w.nameOf(avenger.faction)})`, terrain: this.grid.t[this.i], npcId: avenger.id,
       enemies: [{ type: 'duelist', name: avenger.name, hp: 48 + 24 * avenger.realm, dmg: 8 + 3 * avenger.realm, spd: 130 }], reward: { progress: 20 + 15 * avenger.realm, silver: 0, herb: 0, ore: 0 } });
@@ -541,7 +547,7 @@ export class Game {
     const q = openQuests(this.w).find(x => x.kind === 'relief' && x.place === loc);
     if (!s || !q) return { ok: false, msg: "Bu yerda ocharchilik yo'q." };
     if (this.p.silver < 60) return { ok: false, msg: 'Don uchun 60 kumush kerak.' };
-    this.p.silver -= 60; s.food += 900 / Math.max(3, s.pop); q.taken = true;
+    this.p.silver -= 60; sendGrain(this.w, loc); q.taken = true;
     complete(this.w, q, 'player'); this.run(1);
     this.say('Qishloqqa don olib berdingiz. Aholi buni unutmaydi.', 'good');
     return { ok: true, msg: '' };
